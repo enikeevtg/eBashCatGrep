@@ -1,4 +1,4 @@
-//  Реализация парсера для cat.
+//  Реализация парсера для e_cat.
 //  Почти весь код лежит в main()
 
 #include <stdio.h>
@@ -7,8 +7,8 @@
 #define NUM_SHOPTS 7
 #define NUM_LOPTS 3
 
-size_t strlen(const char* str);
-int strcmp(const char* str1, const char* str2);
+size_t e_strlen(const char* str);
+int e_strcmp(const char* str1, const char* str2);
 
 
 int main(int argc, char** argv) {
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
     //  НАЧАЛО ПАРСИНГА ОПЦИЙ
     for(int i_argv = 1; i_argv < argc && error == 0; i_argv++) {
-        size_t string_length = strlen(argv[i_argv]);  // Длина i-ой строки в массиве строк argv
+        size_t string_length = e_strlen(argv[i_argv]);  // Длина i-ой строки в массиве строк argv
         //  Идентификация флагов опций
         if(argv[i_argv][0] == '-' && string_length > 1) {
             //  Проверка односимвольных флагов (в argv[i] НЕТ второго знака "-")
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
                 error = 1;
                 for(int i_flarr = 0; i_flarr < NUM_LOPTS && error != 0; i_flarr++) {
-                    if(!strcmp(argv[i_argv], lopts_array[i_flarr])) {
+                    if(!e_strcmp(argv[i_argv], lopts_array[i_flarr])) {
                         flags_array[i_flarr] = 1;
                         error = 0;
                     }
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
 /*=======================================================
             Функция определения длины строки
 ========================================================*/
-size_t strlen(const char* str) {
+size_t e_strlen(const char* str) {
     size_t count = 0;
     while (str[count] != '\0')
         count++;
@@ -103,7 +103,7 @@ size_t strlen(const char* str) {
 /*=======================================================
             Функция сравнения двух строк
 ========================================================*/
-int strcmp(const char* str1, const char* str2) {
+int e_strcmp(const char* str1, const char* str2) {
     int count = 0;
     while(str1[count] == str2[count] && str1[count] != '\0')
         count++;
@@ -131,7 +131,7 @@ int strcmp(const char* str1, const char* str2) {
 //     bool OPT_s;
 //     bool OPT_t;
 //     bool OPT_T;
-// } cat_flags;
+// } e_cat_flags;
 
     // for (int i = 0; i < argc; i++) {
     //     printf("%s\n", *(argv + i));
@@ -147,7 +147,7 @@ int strcmp(const char* str1, const char* str2) {
     // char flags[10] = {0};
     // for (int i = 1; i < argc; i++) {
     //     if (argv[i][0] == "-") {
-    //         while (strcmp())
+    //         while (e_strcmp())
     //     }
     // }
     //     printf()

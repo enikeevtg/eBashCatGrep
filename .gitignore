@@ -1,6 +1,10 @@
 .DS_Store
 github-config.sh
 
+# Executable files
+e_cat
+e_grep
+
 # Prerequisites
 *.d
 
