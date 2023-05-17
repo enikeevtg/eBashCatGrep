@@ -1,0 +1,27 @@
+//  Функция определения длины строки в двух реализациях:
+//  первая сделана через цикл while,
+//  вторая - через for.
+//  Реализация через for не пропускается компилятором
+//  с набором флагов, т.к. "statement with no effect"
+
+#include <stdio.h>
+#include <string.h>
+
+size_t strlen(const char* str) {
+    size_t count = 0;
+    while (str[count] != '\0')
+        count++;
+    return count;
+}
+
+size_t strlen_alter(const char* str) {
+    size_t count = 0;
+    for (count; str[count] != '\0'; count++);
+    return count;
+}
+
+void main() {
+    char str[1000];
+    scanf("%s", str);
+    printf("%d %d", strlen(str), strlen_alter(str));
+}
