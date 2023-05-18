@@ -1,15 +1,19 @@
 CC = gcc
-CF = -Wall -Werror -Wextra
+CF = -c -Wall -Werror -Wextra
 
-e_cat :
-	$(CC) $(CF) e_cat.c -o e_cat
+e_cat: e_cat.o e_string.o
+	$(CC) e_cat.o e_string.o -o e_cat
 
-e_cat_test :
-	$(CC) $(CF) e_cat.c -o test_cat/e_cat
+for_test: e_cat.o e_string.o
+	$(CC) e_cat.o e_string.o -o test_cat/e_cat
 
-clean :
-	rm -rf e_cat
+e_cat.o: e_cat.c
+	$(CC) $(CF) e_cat.c
 
-rebuild :
-	rm -rf e_cat
-	$(CC) $(CF) e_cat.c -o e_cat
+e_string.o: ../common/e_string.c
+	$(CC) $(CF) ../common/e_string.c
+
+clean:
+	rm -rf e_cat *.o
+
+rebuild: clean e_cat

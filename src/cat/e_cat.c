@@ -9,12 +9,14 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "../common/e_string.h"  // e_str_len() & e_str_cmp()
+
 #define NUM_SHOPTS 8
 #define NUM_LOPTS 3
 #define TRUE 1
 #define FALSE 0
 
-//---ПРОТОТИПЫ_ФУНКЦИЙ---------------------------------------------------------------------------------------------
+//---ПРОТОТИПЫ_ФУНКЦИЙ-------------------------------------------------------------
 void e_cat(int argc, char** argv);
 int opts_parsing(int argc, char** argv, int* error, char* error_ch,
                  char* shopts, char** lopts, bool* flags_mask);
@@ -24,30 +26,32 @@ int lopt_ident(char* argvi, char** lopts, bool* flags_mask, char* error_ch);
 
 void print2stdout(int argc, char** argv, int FILE_index, bool* flags_mask);
 void print_ch(FILE* fp, bool* flags_mask);
+//----------------------------------------------------------------------------------
 
-size_t e_strlen(const char* str);
-int e_strcmp(const char* str1, const char* str2);
-//-----------------------------------------------------------------------------------------------------------------
+int main(int argc, char** argv) {
+  e_cat(argc, argv);
+  return 0;
+}
 
-int main(int argc, char** argv) { e_cat(argc, argv); }
-
-/*=========================================================================================================
-                                        Реализация команды cat
-=========================================================================================================*/
+/*===================================================================================
+                              Реализация команды cat
+===================================================================================*/
 void e_cat(int argc, char** argv) {
   int error = 0;
   char error_ch = '\0';
   int FILE_index = 0;
 
-  //  Инициализация массивов флагов
+  //  ИНИЦИАЛИЗАЦИЯ МАССИВОВ ФЛАГОВ
   //  Массив односимвольных флагов (short options)
   char shopts[NUM_SHOPTS + 1] = "bsneEtTv";
   //  Массив многосимвольных флагов (long options), ДУБЛИРУЮЩИХ(!!!) короткие
-  //  флаги b, s и n
-  char lopt_b[18] = "--number-nonblank";
-  char lopt_s[16] = "--squeeze-blank";
-  char lopt_n[9] = "--number";
-  char* lopts[NUM_LOPTS] = {lopt_b, lopt_s, lopt_n};
+  // char lopt_b[18] = "--number-nonblank";
+  // char lopt_s[16] = "--squeeze-blank";
+  // char lopt_n[9] = "--number";
+  // char* lopts[NUM_LOPTS] = {lopt_b, lopt_s, lopt_n};
+  //                -b                   -s                 -n
+  char* lopts[] = {"--number-nonblank", "--squeeze-blank", "--number"};
+  //  Оказывается, так тоже работает! Видимо, всё дело в стандарте c11
   bool flags_mask[NUM_SHOPTS] = {0};  //  Массив индексов
 
   if (argc > 1)
@@ -55,19 +59,17 @@ void e_cat(int argc, char** argv) {
         opts_parsing(argc, argv, &error, &error_ch, shopts, lopts, flags_mask);
 
   if (error == 0)
-    print2stdout(argc, argv, FILE_index,
-                 flags_mask /*, &error, &error_filename*/);
+    print2stdout(argc, argv, FILE_index, flags_mask);
   else if (error == 1) {  //  ОБРАБОТКА ОШИБКИ illegal option
     fprintf(stderr, "s_21cat: illegal option -- %c\n", error_ch);
     fprintf(stderr, "usage: e_cat [-%s] [file ...]", shopts);
   }
 }
 
-/*=========================================================================================================
-                            Функция распечатки файла в терминал
-=========================================================================================================*/
-void print2stdout(int argc, char** argv, int FILE_index,
-                  bool* flags_mask /*, int* error, char** error_filename*/) {
+/*===================================================================================
+                      Функция распечатки файла в терминал
+===================================================================================*/
+void print2stdout(int argc, char** argv, int FILE_index, bool* flags_mask) {
   for (int i = FILE_index; i < argc; i++) {
     FILE* fp = stdin;  //  т.е. по умолчанию при отсутствии имени файла будем
                        //  читать stdin
@@ -75,7 +77,7 @@ void print2stdout(int argc, char** argv, int FILE_index,
         FILE_index > 0)  //  Проверка наличия имени файла
       fp = fopen(argv[i], "r");
 
-    if (fp == NULL) {  //  ОБРАБОТКА ОШИБКИ no such file or directory
+    if (fp == NULL) {  //  ОБРАБОТКА ОШИБКИ error = 2 no such file or directory
       fprintf(stderr, "s_21cat: %s: No such file or directory\n", argv[i]);
       //*error = 2;
       //*error_filename = argv[i];
@@ -86,14 +88,15 @@ void print2stdout(int argc, char** argv, int FILE_index,
   }
 }
 
-/*=========================================================================================================
-                Функция распечатки символа в терминал в соотеветствии с
-введёнными флагами: 0 1 2 3 4 5 6 7 " b s n e E t T v"
-=========================================================================================================*/
+/*===================================================================================
+    Функция распечатки символа в терминал в соотеветствии с введёнными флагами:
+                              0 1 2 3 4 5 6 7
+                            " b s n e E t T v "
+===================================================================================*/
 void print_ch(FILE* fp, bool* flags_mask) {
-  char prev_prev_symb = '\0';
-  char prev_symb = '\n';
-  char symb = '\0';
+  char prev_prev_symb = '\0';  // Предпредыдущий прочитанный из файла символ
+  char prev_symb = '\n';  // Предыдущий прочитанный из файла символ
+  char symb = '\0';  // Текущий прочитанный из файла символ
   int nonempty_line_counter = 1;
   int line_counter = 1;
   bool print_access = TRUE;
@@ -151,15 +154,15 @@ void print_ch(FILE* fp, bool* flags_mask) {
   }
 }
 
-/*=========================================================================================================
-                            Функция парсинга аргументов командной строки
-=========================================================================================================*/
+/*===================================================================================
+                  Функция парсинга аргументов командной строки
+===================================================================================*/
 int opts_parsing(int argc, char** argv, int* error, char* error_ch,
                  char* shopts, char** lopts, bool* flags_mask) {
   int FILE_index = 0;
   for (int i_argv = 1; i_argv < argc && *error == 0 && FILE_index == 0;
        i_argv++) {
-    size_t argvi_len =
+    int argvi_len =
         e_strlen(argv[i_argv]);  // Длина i-ой строки в массиве строк argv[][]
 
     //  Проверка односимвольных флагов (в argv[i] НЕТ второго знака "-")
@@ -184,10 +187,9 @@ int opts_parsing(int argc, char** argv, int* error, char* error_ch,
   return FILE_index;
 }
 
-/*=========================================================================================================
-                        Функция идентификации коротких аргументов командной
-строки
-=========================================================================================================*/
+/*===================================================================================
+            Функция идентификации коротких аргументов командной строки
+===================================================================================*/
 int shopt_ident(char* argvi, size_t argvi_len, char* shopts, bool* flags_mask,
                 char* error_ch) {
   int error = 0;
@@ -204,10 +206,9 @@ int shopt_ident(char* argvi, size_t argvi_len, char* shopts, bool* flags_mask,
   return error;
 }
 
-/*=========================================================================================================
-                        Функция идентификации длинных аргументов командной
-строки
-=========================================================================================================*/
+/*===================================================================================
+          Функция идентификации длинных аргументов командной строки
+===================================================================================*/
 int lopt_ident(char* argvi, char** lopts, bool* flags_mask, char* error_ch) {
   *error_ch = '-';
   int error = 1;
@@ -218,22 +219,4 @@ int lopt_ident(char* argvi, char** lopts, bool* flags_mask, char* error_ch) {
     }
   }
   return error;
-}
-
-/*=========================================================================================================
-                                    Функция определения длины строки
-=========================================================================================================*/
-size_t e_strlen(const char* str) {
-  size_t count = 0;
-  while (str[count] != '\0') count++;
-  return count;
-}
-
-/*=========================================================================================================
-                                        Функция сравнения двух строк
-=========================================================================================================*/
-int e_strcmp(const char* str1, const char* str2) {
-  int count = 0;
-  while (str1[count] == str2[count] && str1[count] != '\0') count++;
-  return str1[count] - str2[count];
 }
