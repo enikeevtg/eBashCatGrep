@@ -19,8 +19,8 @@
 
 //---ПРОТОТИПЫ_ФУНКЦИЙ-------------------------------------------------------------
 void e_cat(int argc, char** argv);
-void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask);
-void print_ch(FILE* fp, int* flags_mask);
+void print2stdout(int argc, char** argv, int nonopt_index, bool* flags_mask);
+void print_ch(FILE* fp, bool* flags_mask);
 //----------------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
@@ -44,7 +44,7 @@ void e_cat(int argc, char** argv) {
   //                -b                   -s                 -n
   char* lopts[] = {"--number-nonblank", "--squeeze-blank", "--number"};
   // Массив индикации введённых флагов:
-  int flags_mask[NUM_SHOPTS] = {0};
+  bool flags_mask[NUM_SHOPTS] = {0};
 
   if (argc > 1)
     nonopt_index = opt_def(argc, argv, start_argv, &error, &error_ch, shopts,
@@ -61,14 +61,14 @@ void e_cat(int argc, char** argv) {
 /*===================================================================================
                       Функция распечатки файла в терминал
 ===================================================================================*/
-void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask) {
+void print2stdout(int argc, char** argv, int nonopt_index, bool* flags_mask) {
   for (int i = nonopt_index; i < argc; i++) {
     FILE* fp = stdin;  // т.е. по умолчанию при отсутствии имени файла будем
                        // считывать stdin
 
     // Проверка наличия имени файла:
     if (nonopt_index < argc && e_strcmp(argv[i], "-") && nonopt_index > 0)
-      fp = fopen(argv[i], "r");
+          fp = fopen(argv[i], "r");
 
     // ОБРАБОТКА ОШИБКИ error = 2 no such file or directory:
     if (fp == NULL)
@@ -77,7 +77,9 @@ void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask) {
       print_ch(fp, flags_mask);
 
     // Закрытие файла:
-    if (fp != NULL) fclose(fp);
+    if (fp != NULL)
+      fclose(fp);
+
   }
 }
 
@@ -86,18 +88,21 @@ void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask) {
                               0 1 2 3 4 5 6 7
                             " b s n e E t T v "
 ===================================================================================*/
-void print_ch(FILE* fp, int* flags_mask) {
+void print_ch(FILE* fp, bool* flags_mask) {
   char prev_prev_symb = '\0';  // Предпредыдущий прочитанный из файла символ
   char prev_symb = '\n';  // Предыдущий прочитанный из файла символ
   char symb = '\0';  // Текущий прочитанный из файла символ
-  int line_counter = 0;
+  int nonempty_line_counter = 1;
+  int line_counter = 1;
   bool print_access = TRUE;
 
   // while (fread(&symb, sizeof(char), 1, fp) > 0) {
   while ((symb = getc(fp)) != EOF) {
     // -b || --number-nonblank:
-    if (flags_mask[0] && symb != '\n' && prev_symb == '\n')
-      printf("%6d\t", ++line_counter);
+    if (flags_mask[0] && symb != '\n' && prev_symb == '\n') {
+      printf("%6d\t", nonempty_line_counter);
+      nonempty_line_counter++;
+    }
 
     // -s || --squeeze_blank:
     if (flags_mask[1] && symb == '\n' && prev_symb == '\n' &&
@@ -106,7 +111,7 @@ void print_ch(FILE* fp, int* flags_mask) {
 
     // -n || --number, но нет -b || --number-nonblank:
     if (flags_mask[2] && !flags_mask[0] && prev_symb == '\n' && print_access)
-      printf("%6d\t", ++line_counter);
+      printf("%6d\t", line_counter);
 
     // Непечатаемые символы в -e и -t (флаг -v)
     // [NULL...Backspace] || [Vertical Tab...Unit Separator] -> ['@',
@@ -137,6 +142,9 @@ void print_ch(FILE* fp, int* flags_mask) {
 
     prev_prev_symb = prev_symb;
     prev_symb = symb;
+    if (symb == '\n' &&
+        print_access)  // В случае наличия флага -s print_access здесь для
+      line_counter++;  // учёта сжатия при определении номера строки
     print_access = TRUE;
   }
 }

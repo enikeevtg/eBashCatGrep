@@ -1,7 +1,7 @@
-#ifndef ___e_STRING_H___
-#define ___e_STRING_H___
+#ifndef e_STRING_H
+#define e_STRING_H
 
 int e_strlen(const char* str);
 int e_strcmp(const char* str1, const char* str2);
 
-#endif  // ___e_STRING_H___
+#endif  // e_STRING_H

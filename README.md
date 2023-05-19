@@ -1,7 +1,10 @@
-# Simple Bash Utils:
+# eBashUtils:
 
-cat
+## Executables:
+e_cat
 
-grep
+e_grep
+
+## Static Library:
 
 libString.a

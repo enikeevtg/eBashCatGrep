@@ -1,5 +1,6 @@
 //  Тестирование инициализации массива строк с многосимвольными флагами
 #include <stdio.h>
+#include "../common/s21_string.h"
 
 int main() {
     char opt_b[18] = "--number-nonblank";
@@ -11,6 +12,10 @@ int main() {
         printf("%s\n", word_array[i]);
         printf("%s\n", array[i]);
     }
+
+    // Проверка считывания длины массива строк (fail)
+    // char* lopts[] = {"--number-nonblank", "--squeeze-blank", "--number"};
+    // printf("%d", s21_strlen(lopts));
 
     return 0;
 }

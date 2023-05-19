@@ -1,10 +1,9 @@
 #include "e_string.h"
 
-//#include <stddef.h>  // typedef __SIZE_TYPE__ size_t;
-
 /*===================================================================================
                           Функция определения длины строки
 ===================================================================================*/
+// unsigned int e_strlen(const char* str) {
 int e_strlen(const char* str) {
   int count = 0;
   while (str[count] != '\0') count++;
