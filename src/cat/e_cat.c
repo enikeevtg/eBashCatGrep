@@ -12,16 +12,17 @@
 #include "../common/e_optdef.h"  // opt_def()
 #include "../common/e_string.h"  // e_str_len() & e_str_cmp()
 
-#define NUM_SHOPTS 8  // Число односимвольных опций
-#define NUM_LOPTS 3   // Число многосимвольных опций
+#define SHOPTS_NUM 8  // Количество односимвольных опций
+#define LOPTS_NUM 3   // Количество многосимвольных опций
+
 #define TRUE 1
 #define FALSE 0
 
-//---ПРОТОТИПЫ_ФУНКЦИЙ-------------------------------------------------------------
+//---ПРОТОТИПЫ_ФУНКЦИЙ--------------------------------------------------------------
 void e_cat(int argc, char** argv);
 void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask);
 void print_ch(FILE* fp, int* flags_mask);
-//----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
   e_cat(argc, argv);
@@ -33,27 +34,26 @@ int main(int argc, char** argv) {
 ===================================================================================*/
 void e_cat(int argc, char** argv) {
   int error = 0;
-  char error_ch = '\0';
+  char error_ch = '\0';  // Символ ошибочного флага
   int nonopt_index = 0;
   int start_argv = 1;
 
   // ИНИЦИАЛИЗАЦИЯ МАССИВОВ ФЛАГОВ
   // Массив односимвольных флагов (short options):
-  char shopts[NUM_SHOPTS + 1] = "bsneEtTv";
+  char shopts[SHOPTS_NUM + 1] = "bsneEtTv";
   // Массив многосимвольных флагов (long options), ДУБЛИРУЮЩИХ(!!!) короткие:
   //                -b                   -s                 -n
   char* lopts[] = {"--number-nonblank", "--squeeze-blank", "--number"};
   // Массив индикации введённых флагов:
-  int flags_mask[NUM_SHOPTS] = {0};
+  int flags_mask[SHOPTS_NUM] = {0};
 
   if (argc > 1)
-    nonopt_index = opt_def(argc, argv, start_argv, &error, &error_ch, shopts,
-                           NUM_SHOPTS, lopts, NUM_LOPTS, flags_mask);
+    opt_def(argc, argv, start_argv, &error, &error_ch, shopts, lopts, LOPTS_NUM, flags_mask, &nonopt_index);
 
-  if (error == 0)
+  if (!error)  // <=> if (error == 0)
     print2stdout(argc, argv, nonopt_index, flags_mask);
-  else if (error == 1) {  // ОБРАБОТКА ОШИБКИ illegal option
-    fprintf(stderr, "s_21cat: illegal option -- %c\n", error_ch);
+  else if (error == 1) {  // ОБРАБОТКА ОШИБКИ 1 illegal option
+    fprintf(stderr, "e_cat: illegal option -- %c\n", error_ch);
     fprintf(stderr, "usage: e_cat [-%s] [file ...]", shopts);
   }
 }
@@ -70,9 +70,9 @@ void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask) {
     if (nonopt_index < argc && e_strcmp(argv[i], "-") && nonopt_index > 0)
       fp = fopen(argv[i], "r");
 
-    // ОБРАБОТКА ОШИБКИ error = 2 no such file or directory:
+    // ОБРАБОТКА ОШИБКИ 2 no such file or directory:
     if (fp == NULL)
-      fprintf(stderr, "s_21cat: %s: No such file or directory\n", argv[i]);
+      fprintf(stderr, "e_cat: %s: No such file or directory\n", argv[i]);
     else
       print_ch(fp, flags_mask);
 

@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #  																																					#
-#    Makefile для проекта SimpleBashUtilits-1: e_cat                        #
+#    Makefile для проекта SimpleBashUtilits-1:   e_grep                     #
 #    (c) T. Enikeev                                                         #
 #    zeftyrst@student.21-school.ru                                          #
 #				 																																	  #
@@ -17,37 +17,37 @@
 
 CC = gcc
 CF = -c -Wall -Werror -Wextra
-COM = ../common/
+COM = ../common
 SRC = $(COM)e_string.c $(COM)e_optdef.c
 OBJ = $(SRC:.c=.o)
 LIB = SimpleBash
-EXE = e_cat
+EXE = e_grep
 
 
-e_cat: e_cat.o lib
-	$(CC) -o $(EXE) e_cat.o -L$(COM) -l$(LIB)
-	rm $<
+e_grep: e_grep.o lib
+	$(CC) -o $(EXE) e_grep.o -L$(COM) -l$(LIB)
+	rm $^
 
 test:
-	sh test_cat/test_func_cat.sh
+	sh test_grep/
 
-e_cat.o: e_cat.c
+e_grep.o: e_grep.c
 	$(CC) $(CF) $^
 
 lib: $(OBJ)
-	ar rv $(COM)$@$(LIB).a $(OBJ)
+	ar rv $@$(LIB).a $(OBJ)
 	rm $(OBJ)
 
 $(COM)e_string.o: $(COM)e_string.c
-	$(CC) $(CF) $^ -o $@
+	$(CC) $(CF) -o $@
 
 $(COM)e_optdef.o: $(COM)e_optdef.c
-	$(CC) $(CF) $^ -o $@
+	$(CC) $(CF) -o $@
 
 clean:
-	rm -rf $(EXE) $(OBJ) e_cat.o $(COM)lib$(LIB).a
+	rm -rf $(EXE) $(OBJ) e_grep.o $(COM)lib$(LIB).a
 
-rebuild: clean e_cat
+rebuild: clean e_grep
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
