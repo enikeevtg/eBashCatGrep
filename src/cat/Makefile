@@ -18,34 +18,36 @@
 CC = gcc
 CF = -c -Wall -Werror -Wextra
 COM = ../common/
-SRC = $(COM)e_string.c $(COM)e_optdef.c
-OBJ = $(SRC:.c=.o)
-LIB = SimpleBash
+SRC = e_cat.c optdef.c
+OBJ = e_cat.o optdef.o
+#OBJ = $(SRC:.c=.o)
+LIB = String
 EXE = e_cat
+STD = -std=c11 -pedantic
 
 
-e_cat: e_cat.o lib
-	$(CC) -o $(EXE) e_cat.o -L$(COM) -l$(LIB)
-	rm $<
+e_cat: $(OBJ) lib
+	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)
+	rm -rf *.o
+
+e_cat.o:
+	$(CC) $(CF) e_cat.c $(STD)
+
+optdef.o: 
+	$(CC) $(CF) optdef.c $(STD)
+
+lib: $(COM)e_string.o
+	ar rv $(COM)lib$(LIB).a $^
+	rm $^
+
+$(COM)e_string.o: 
+	$(CC) $(CF) $(COM)e_string.c -o $@
 
 test:
 	sh test_cat/test_func_cat.sh
 
-e_cat.o: e_cat.c
-	$(CC) $(CF) $^
-
-lib: $(OBJ)
-	ar rv $(COM)$@$(LIB).a $(OBJ)
-	rm $(OBJ)
-
-$(COM)e_string.o: $(COM)e_string.c
-	$(CC) $(CF) $^ -o $@
-
-$(COM)e_optdef.o: $(COM)e_optdef.c
-	$(CC) $(CF) $^ -o $@
-
 clean:
-	rm -rf $(EXE) $(OBJ) e_cat.o $(COM)lib$(LIB).a
+	rm -rf $(EXE) $(OBJ) $(COM)lib$(LIB).a
 
 rebuild: clean e_cat
 

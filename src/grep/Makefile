@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #  																																					#
-#    Makefile для проекта SimpleBashUtilits-1:   e_grep                     #
+#    Makefile для проекта SimpleBashUtilits-1: e_grep                       #
 #    (c) T. Enikeev                                                         #
 #    zeftyrst@student.21-school.ru                                          #
 #				 																																	  #
@@ -22,17 +22,18 @@ SRC = $(COM)e_string.c $(COM)e_optdef.c
 OBJ = $(SRC:.c=.o)
 LIB = SimpleBash
 EXE = e_grep
+STD = -std=c11 -pedantic
 
 
-e_grep: e_grep.o lib
-	$(CC) -o $(EXE) e_grep.o -L$(COM) -l$(LIB)
-	rm $^
+e_grep: e_grep.o
+	$(CC) -o $(EXE) e_grep.o $(STD)
+	rm $<
 
 test:
 	sh test_grep/
 
 e_grep.o: e_grep.c
-	$(CC) $(CF) $^
+	$(CC) $(CF) $^ $(STD)
 
 lib: $(OBJ)
 	ar rv $@$(LIB).a $(OBJ)

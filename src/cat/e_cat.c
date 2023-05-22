@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "../common/e_optdef.h"  // opt_def()
+#include "optdef.h"  // opt_def()
 #include "../common/e_string.h"  // e_str_len() & e_str_cmp()
 
 #define SHOPTS_NUM 8  // Количество односимвольных опций
@@ -97,7 +97,7 @@ void print_ch(FILE* fp, int* flags_mask) {
   while ((symb = getc(fp)) != EOF) {
     // -b || --number-nonblank:
     if (flags_mask[0] && symb != '\n' && prev_symb == '\n')
-      printf("%6d\t", ++line_counter);
+      printf("%6d\t", ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
     // -s || --squeeze_blank:
     if (flags_mask[1] && symb == '\n' && prev_symb == '\n' &&
@@ -106,12 +106,12 @@ void print_ch(FILE* fp, int* flags_mask) {
 
     // -n || --number, но нет -b || --number-nonblank:
     if (flags_mask[2] && !flags_mask[0] && prev_symb == '\n' && print_access)
-      printf("%6d\t", ++line_counter);
+      printf("%6d\t", ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
     // Непечатаемые символы в -e и -t (флаг -v)
-    // [NULL...Backspace] || [Vertical Tab...Unit Separator] -> ['@',
-    // 'A',...,'H'] || ['K'...'_'] [0...8] || [11...31] -> [64...72] ||
-    // [75...95] 9 и 10 исключаются, так как это \n и \t:
+    // [NULL...Backspace] || [Vertical Tab...Unit Separator] -> ['@',...,'H']
+    // || ['K'...'_'] [0...8] || [11...31] -> [64...72] || [75...95]
+    // 9 и 10 исключаются, так как это \n и \t:
     if (flags_mask[3] || flags_mask[5] || flags_mask[7]) {
       if ((symb >= 0 && symb <= 8) || (symb >= 11 && symb <= 31)) {
         printf("^%c", symb + 64);

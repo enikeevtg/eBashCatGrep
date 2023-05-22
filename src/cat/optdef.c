@@ -1,16 +1,15 @@
-#include "e_optdef.h"
+#include "optdef.h"
 
 #include <stdio.h>
 
-#include "e_string.h"
+#include "../common/e_string.h"
 
 /*===================================================================================
-          Функция определения опций программы из аргументов командной строки:
-          Возвращает индекс первого argv, не содержащего в себе опцию
+          Функция определения опций программы из аргументов командной строки
 ===================================================================================*/
 void opt_def(int argc, char** argv, int start_argv, int* error, char* error_ch,
-            char* shopts, char** lopts, int lopts_num,
-            int* flags_mask, int* nonopt_index) {
+             char* shopts, char** lopts, int lopts_num, int* flags_mask,
+             int* nonopt_index) {
   int stop_argv = 0;
   for (int i = start_argv; i < argc && *error == 0 && stop_argv == 0; i++) {
     int argvi_len = e_strlen(argv[i]);  // Длина строки argv[i]
@@ -35,8 +34,8 @@ void opt_def(int argc, char** argv, int start_argv, int* error, char* error_ch,
 /*===================================================================================
             Функция идентификации коротких аргументов командной строки
 ===================================================================================*/
-void shopt_ident(char* argvi, char* shopts, int* flags_mask,
-                 int* error, char* error_ch) {
+void shopt_ident(char* argvi, char* shopts, int* flags_mask, int* error,
+                 char* error_ch) {
   argvi++;
   while (*argvi && !*error) {
     char* opt_pos = e_strchr(shopts, *argvi);
@@ -55,24 +54,11 @@ void shopt_ident(char* argvi, char* shopts, int* flags_mask,
 ===================================================================================*/
 void lopt_ident(char* argvi, char** lopts, int lopts_num, int* flags_mask,
                 int* error, char* error_ch) {
-
-  for (int i_mask = 0; i_mask < lopts_num && error == 0; i_mask++) {
+  for (int i_mask = 0; i_mask < lopts_num && *error == 0; i_mask++) {
     if (e_strcmp(argvi, lopts[i_mask])) {
       *error = 1;
       *error_ch = '-';
     } else
-      flags_mask[i_mask]++;
+      flags_mask[i_mask] = 1;
   }
 }
-
-// void lopt_ident(char* argvi, char** lopts, int lopts_num, int* flags_mask,
-//                 int* error, char* error_ch) {
-//   *error_ch = '-';
-//   error = 1;
-//   for (int i_mask = 0; i_mask < lopts_num && error != 0; i_mask++) {
-//     if (!e_strcmp(argvi, lopts[i_mask])) {
-//       flags_mask[i_mask]++;
-//       error = 0;
-//     }
-//   }
-// }
