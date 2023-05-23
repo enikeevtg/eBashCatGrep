@@ -4,80 +4,89 @@
  *  Коды ошибок error:
  *  1 - illegal option
  *  2 - no such file or directory
+ *  3 - system memory error
+ *
+ *  Комментарий к обработке случая флага -e, -t, или -v:
+ *  [NULL...Backspace] || [Vertical Tab...Unit Separator] ->
+ *  -> ['@',...,'H'] || ['K'...'_']
+ *  [0...8] || [11...31] -> [64...72] || [75...95]
+ *  9 и 10 исключаются, так как это \n и \t:
  */
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "optdef.h"  // opt_def()
 #include "../common/e_string.h"  // e_str_len() & e_str_cmp()
+#include "optdef.h"                // opt_def()
 
 #define SHOPTS_NUM 8  // Количество односимвольных опций
-#define LOPTS_NUM 3   // Количество многосимвольных опций
+#define LOPTS_NUM 3  // Количество многосимвольных опций
 
 #define TRUE 1
 #define FALSE 0
 
 //---ПРОТОТИПЫ_ФУНКЦИЙ--------------------------------------------------------------
-void e_cat(int argc, char** argv);
-void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask);
+void e_cat(int argc, char** argv, data_t* pdata);
+// void print2stdout(int argc, char** argv, data_t* data);
 void print_ch(FILE* fp, int* flags_mask);
+void error_print(data_t* pdata);
 //-----------------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
-  e_cat(argc, argv);
-  return 0;
+  // ИНИЦИАЛИЗАЦИЯ СТРУКТУРЫ ДАННЫХ ТИПА DATA_T
+  data_t data = {0};
+  data.shopts = "bsneEtTv";
+  data.lopts = (char**)calloc(LOPTS_NUM, sizeof(char*));
+  if (data.lopts != NULL) {
+    *(data.lopts + 0) = "--number-nonblank";
+    *(data.lopts + 1) = "--number-nonblank";
+    *(data.lopts + 2) = "--number";
+  } else
+    data.error = 3;
+  data.lopts_num = LOPTS_NUM;
+  int array[SHOPTS_NUM] = {0};
+  data.flags_mask = array;
+  data.error = 0;
+  data.error_ch = '\0';
+  data.nonopt_index = 0;
+
+  // ЗАПУСК ОСНОВНОЙ ФУНКЦИИ ПРОГРАММЫ
+  if (!data.error)  // <=> if (data.error == 0)
+    e_cat(argc, argv, &data);
+
+  // ОБРАБОТКА ОШИБОК
+  if (data.error)  // <=> if (data.error != 0)
+    error_print(&data);
+
+  // ОСВОБОЖДЕНИЕ ПАМЯТИ
+  if (data.error != 3) free(data.lopts);
+
+  return data.error;
 }
 
 /*===================================================================================
                               Реализация команды cat
 ===================================================================================*/
-void e_cat(int argc, char** argv) {
-  int error = 0;
-  char error_ch = '\0';  // Символ ошибочного флага
-  int nonopt_index = 0;
-  int start_argv = 1;
+void e_cat(int argc, char** argv, data_t* pdata) {
+  if (argc > 1) opt_def(argc, argv, pdata);
 
-  // ИНИЦИАЛИЗАЦИЯ МАССИВОВ ФЛАГОВ
-  // Массив односимвольных флагов (short options):
-  char shopts[SHOPTS_NUM + 1] = "bsneEtTv";
-  // Массив многосимвольных флагов (long options), ДУБЛИРУЮЩИХ(!!!) короткие:
-  //                -b                   -s                 -n
-  char* lopts[] = {"--number-nonblank", "--squeeze-blank", "--number"};
-  // Массив индикации введённых флагов:
-  int flags_mask[SHOPTS_NUM] = {0};
-
-  if (argc > 1)
-    opt_def(argc, argv, start_argv, &error, &error_ch, shopts, lopts, LOPTS_NUM, flags_mask, &nonopt_index);
-
-  if (!error)  // <=> if (error == 0)
-    print2stdout(argc, argv, nonopt_index, flags_mask);
-  else if (error == 1) {  // ОБРАБОТКА ОШИБКИ 1 illegal option
-    fprintf(stderr, "e_cat: illegal option -- %c\n", error_ch);
-    fprintf(stderr, "usage: e_cat [-%s] [file ...]", shopts);
-  }
-}
-
-/*===================================================================================
-                      Функция распечатки файла в терминал
-===================================================================================*/
-void print2stdout(int argc, char** argv, int nonopt_index, int* flags_mask) {
-  for (int i = nonopt_index; i < argc; i++) {
+  for (int i = pdata->nonopt_index; i < argc && pdata->error == 0; i++) {
     FILE* fp = stdin;  // т.е. по умолчанию при отсутствии имени файла будем
                        // считывать stdin
 
     // Проверка наличия имени файла:
-    if (nonopt_index < argc && e_strcmp(argv[i], "-") && nonopt_index > 0)
+    if (pdata->nonopt_index < argc && pdata->nonopt_index > 0 &&
+        e_strcmp(argv[i], "-"))
       fp = fopen(argv[i], "r");
 
     // ОБРАБОТКА ОШИБКИ 2 no such file or directory:
     if (fp == NULL)
       fprintf(stderr, "e_cat: %s: No such file or directory\n", argv[i]);
-    else
-      print_ch(fp, flags_mask);
-
-    // Закрытие файла:
-    if (fp != NULL) fclose(fp);
+    else {
+      print_ch(fp, pdata->flags_mask);
+      fclose(fp);  // Закрытие файла
+    }
   }
 }
 
@@ -93,25 +102,23 @@ void print_ch(FILE* fp, int* flags_mask) {
   int line_counter = 0;
   bool print_access = TRUE;
 
-  // while (fread(&symb, sizeof(char), 1, fp) > 0) {
   while ((symb = getc(fp)) != EOF) {
     // -b || --number-nonblank:
     if (flags_mask[0] && symb != '\n' && prev_symb == '\n')
-      printf("%6d\t", ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
+      printf("%6d\t",
+             ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
     // -s || --squeeze_blank:
     if (flags_mask[1] && symb == '\n' && prev_symb == '\n' &&
         prev_prev_symb == '\n')
       print_access = FALSE;
 
-    // -n || --number, но нет -b || --number-nonblank:
+    // -n || --number, но нет (-b || --number-nonblank):
     if (flags_mask[2] && !flags_mask[0] && prev_symb == '\n' && print_access)
-      printf("%6d\t", ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
+      printf("%6d\t",
+             ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
     // Непечатаемые символы в -e и -t (флаг -v)
-    // [NULL...Backspace] || [Vertical Tab...Unit Separator] -> ['@',...,'H']
-    // || ['K'...'_'] [0...8] || [11...31] -> [64...72] || [75...95]
-    // 9 и 10 исключаются, так как это \n и \t:
     if (flags_mask[3] || flags_mask[5] || flags_mask[7]) {
       if ((symb >= 0 && symb <= 8) || (symb >= 11 && symb <= 31)) {
         printf("^%c", symb + 64);
@@ -139,4 +146,15 @@ void print_ch(FILE* fp, int* flags_mask) {
     prev_symb = symb;
     print_access = TRUE;
   }
+}
+
+/*===================================================================================
+                              Обработка ошибок
+===================================================================================*/
+void error_print(data_t* pdata) {
+  if (pdata->error == 1) {  // ОБРАБОТКА ОШИБКИ 1 illegal option
+    fprintf(stderr, "e_cat: illegal option -- %c\n", pdata->error_ch);
+    fprintf(stderr, "usage: e_cat [-%s] [file ...]", pdata->shopts);
+  } else if (pdata->error == 3)
+    fprintf(stderr, "e_cat: system memory error");
 }

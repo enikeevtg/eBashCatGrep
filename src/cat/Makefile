@@ -20,7 +20,6 @@ CF = -c -Wall -Werror -Wextra
 COM = ../common/
 SRC = e_cat.c optdef.c
 OBJ = e_cat.o optdef.o
-#OBJ = $(SRC:.c=.o)
 LIB = String
 EXE = e_cat
 STD = -std=c11 -pedantic
@@ -37,7 +36,7 @@ optdef.o:
 	$(CC) $(CF) optdef.c $(STD)
 
 lib: $(COM)e_string.o
-	ar rv $(COM)lib$(LIB).a $^
+	ar rv $(COM)libString.a $^
 	rm $^
 
 $(COM)e_string.o: 
@@ -47,7 +46,7 @@ test:
 	sh test_cat/test_func_cat.sh
 
 clean:
-	rm -rf $(EXE) $(OBJ) $(COM)lib$(LIB).a
+	rm -rf $(EXE) $(OBJ) $(COM)libString.a
 
 rebuild: clean e_cat
 
