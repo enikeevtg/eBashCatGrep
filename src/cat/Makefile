@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #  																																					#
-#    Makefile для проекта SimpleBashUtilits-1: e_cat                        #
+#    Makefile для проекта SimpleBashUtilits-1:   e_cat                      #
 #    (c) T. Enikeev                                                         #
 #    zeftyrst@student.21-school.ru                                          #
 #				 																																	  #
@@ -40,7 +40,7 @@ lib: $(COM)e_string.o
 	rm $^
 
 $(COM)e_string.o: 
-	$(CC) $(CF) $(COM)e_string.c -o $@
+	$(CC) $(CF) $(COM)e_string.c -o $@ $(STD)
 
 test:
 	sh test_cat/test_func_cat.sh

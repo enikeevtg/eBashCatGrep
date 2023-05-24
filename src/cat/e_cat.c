@@ -28,8 +28,7 @@
 
 //---ПРОТОТИПЫ_ФУНКЦИЙ--------------------------------------------------------------
 void e_cat(int argc, char** argv, data_t* pdata);
-// void print2stdout(int argc, char** argv, data_t* data);
-void print_ch(FILE* fp, int* flags_mask);
+void print_ch(FILE* fp, int* opt_mask);
 void error_print(data_t* pdata);
 //-----------------------------------------------------------------------------------
 
@@ -46,7 +45,7 @@ int main(int argc, char** argv) {
     data.error = 3;
   data.lopts_num = LOPTS_NUM;
   int array[SHOPTS_NUM] = {0};
-  data.flags_mask = array;
+  data.opt_mask = array;
   data.error = 0;
   data.error_ch = '\0';
   data.nonopt_index = 0;
@@ -84,7 +83,7 @@ void e_cat(int argc, char** argv, data_t* pdata) {
     if (fp == NULL)
       fprintf(stderr, "e_cat: %s: No such file or directory\n", argv[i]);
     else {
-      print_ch(fp, pdata->flags_mask);
+      print_ch(fp, pdata->opt_mask);
       fclose(fp);  // Закрытие файла
     }
   }
@@ -95,7 +94,7 @@ void e_cat(int argc, char** argv, data_t* pdata) {
                               0 1 2 3 4 5 6 7
                             " b s n e E t T v "
 ===================================================================================*/
-void print_ch(FILE* fp, int* flags_mask) {
+void print_ch(FILE* fp, int* opt_mask) {
   char prev_prev_symb = '\0';  // Предпредыдущий прочитанный из файла символ
   char prev_symb = '\n';  // Предыдущий прочитанный из файла символ
   char symb = '\0';  // Текущий прочитанный из файла символ
@@ -104,22 +103,22 @@ void print_ch(FILE* fp, int* flags_mask) {
 
   while ((symb = getc(fp)) != EOF) {
     // -b || --number-nonblank:
-    if (flags_mask[0] && symb != '\n' && prev_symb == '\n')
+    if (opt_mask[0] && symb != '\n' && prev_symb == '\n')
       printf("%6d\t",
              ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
     // -s || --squeeze_blank:
-    if (flags_mask[1] && symb == '\n' && prev_symb == '\n' &&
+    if (opt_mask[1] && symb == '\n' && prev_symb == '\n' &&
         prev_prev_symb == '\n')
       print_access = FALSE;
 
     // -n || --number, но нет (-b || --number-nonblank):
-    if (flags_mask[2] && !flags_mask[0] && prev_symb == '\n' && print_access)
+    if (opt_mask[2] && !opt_mask[0] && prev_symb == '\n' && print_access)
       printf("%6d\t",
              ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
     // Непечатаемые символы в -e и -t (флаг -v)
-    if (flags_mask[3] || flags_mask[5] || flags_mask[7]) {
+    if (opt_mask[3] || opt_mask[5] || opt_mask[7]) {
       if ((symb >= 0 && symb <= 8) || (symb >= 11 && symb <= 31)) {
         printf("^%c", symb + 64);
         print_access = FALSE;
@@ -131,11 +130,11 @@ void print_ch(FILE* fp, int* flags_mask) {
     }
 
     // -e || -E:
-    if ((flags_mask[3] || flags_mask[4]) && symb == '\n' && print_access)
+    if ((opt_mask[3] || opt_mask[4]) && symb == '\n' && print_access)
       printf("$");
 
     // -t || -T:
-    if ((flags_mask[5] || flags_mask[6]) && symb == '\t') {
+    if ((opt_mask[5] || opt_mask[6]) && symb == '\t') {
       printf("^I");
       print_access = FALSE;
     }

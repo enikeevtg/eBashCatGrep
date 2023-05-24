@@ -40,7 +40,7 @@ void shopt_ident(char* argvi, data_t* pdata) {
       pdata->error = 1;
       pdata->error_ch = argvi[i];
     } else
-      pdata->flags_mask[opt_pos - pdata->shopts] = 1;
+      pdata->opt_mask[opt_pos - pdata->shopts] = 1;
   }
 }
 
@@ -51,7 +51,7 @@ void lopt_ident(char* argvi, data_t* pdata) {
   int match = pdata->lopts_num;  // Счётчик совпадений
   for (int i = 0; i < pdata->lopts_num; i++) {
     if (e_strcmp(argvi, pdata->lopts[i]) == 0)
-      pdata->flags_mask[i] = 1;
+      pdata->opt_mask[i] = 1;
     else
       match--;
   }

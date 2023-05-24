@@ -17,38 +17,53 @@
 
 CC = gcc
 CF = -c -Wall -Werror -Wextra
-COM = ../common
-SRC = $(COM)e_string.c $(COM)e_optdef.c
-OBJ = $(SRC:.c=.o)
-LIB = SimpleBash
+COM = ../common/
+SRC = e_grep.c
+OBJ = e_grep.o
+LIB = String
 EXE = e_grep
 STD = -std=c11 -pedantic
 
 
 e_grep: e_grep.o
-	$(CC) -o $(EXE) e_grep.o $(STD)
-	rm $<
+	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)
+	rm *.o
 
-test:
-	sh test_grep/
+#test:
+#	sh test_grep/
 
-e_grep.o: e_grep.c
-	$(CC) $(CF) $^ $(STD)
+e_grep.o:
+	$(CC) $(CF) e_grep.c $(STD)
 
-lib: $(OBJ)
-	ar rv $@$(LIB).a $(OBJ)
-	rm $(OBJ)
+lib: $(COM)e_string.o
+	ar rv $(COM)libString.a $^
+	rm $^
 
-$(COM)e_string.o: $(COM)e_string.c
-	$(CC) $(CF) -o $@
+$(COM)e_string.o: 
+	$(CC) $(CF) $(COM)e_string.c -o $@ $(STD)
 
-$(COM)e_optdef.o: $(COM)e_optdef.c
-	$(CC) $(CF) -o $@
+#grep_optdef.o: 
+#	$(CC) $(CF) -o grep_optdef.c $@
 
 clean:
-	rm -rf $(EXE) $(OBJ) e_grep.o $(COM)lib$(LIB).a
+	rm -rf $(EXE) $(OBJ) $(COM)libString.a
 
 rebuild: clean e_grep
+
+test:
+	./e_grep -e A -ne12345678 text.txt
+	./e_grep -ne12345678 text.txt
+	./e_grep -e A text.txt -e n
+	./e_grep -e A text.txt B
+	./e_grep -e-e text.txt -e text2.txt
+	./e_grep -e-e -e text.txt
+	./e_grep -i -v A
+	./e_grep -e text.txt o -i fgdf -ne -e
+	./e_grep -e text.txt o -i fgdf -nen -e
+	./e_grep -e text.txt o -i fgdf -nene -e
+	./e_grep -e A text.txt
+	./e_grep -e A text.txt -e
+
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
