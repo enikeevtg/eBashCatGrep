@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #  																																					#
-#    Makefile для проекта SimpleBashUtilits-1:   e_cat                      #
+#    Makefile для проекта SimpleBashUtilits-1: e_cat                        #
 #    (c) T. Enikeev                                                         #
 #    zeftyrst@student.21-school.ru                                          #
 #				 																																	  #

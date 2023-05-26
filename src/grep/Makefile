@@ -25,7 +25,7 @@ EXE = e_grep
 STD = -std=c11 -pedantic
 
 
-e_grep: e_grep.o
+e_grep: e_grep.o lib
 	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)
 	rm *.o
 
@@ -63,6 +63,33 @@ test:
 	./e_grep -e text.txt o -i fgdf -nene -e
 	./e_grep -e A text.txt
 	./e_grep -e A text.txt -e
+	./e_grep -o -e ina -e rina -o  test.txt
+	./e_grep -o -e rina -e ina -o  test.txt
+	./e_grep -e A -ne12345678 text.txt
+	./e_grep -ne12345678 text.txt
+	./e_grep -e A text.txt -e n
+	./e_grep -e A text.txt B
+	./e_grep -e-e text.txt -e text2.txt
+	./e_grep -e text.txt o -i fgdf -ne -e
+	./e_grep -e A text.txt
+	./e_grep - text.txt
+	./e_grep test text.txt
+	./e_grep test text.txt -l
+	./e_grep test text.txt -l -en
+	./e_grep -f file.txt text.txt
+	./e_grep -f file.txt A text.txt
+	./e_grep -ef file.txt A text.txt.
+	./e_grep -fe file.txt A text.txt
+	./e_grep -f file.txt text.txt -ffile.txt -en
+	./e_grep -e-e -e text.txt
+	./e_grep -i -v A
+	./e_grep -e text.txt o -i fgdf -nen -e
+	./e_grep -e text.txt o -i fgdf -nene -e
+	./e_grep -e A text.txt -e
+	./e_grep -nlkjhgedf text.txt
+	./e_grep test text.txt -
+	./e_grep - text.txt -en
+	./e_grep - text.txt
 
 
 

@@ -155,5 +155,5 @@ void error_print(data_t* pdata) {
     fprintf(stderr, "e_cat: illegal option -- %c\n", pdata->error_ch);
     fprintf(stderr, "usage: e_cat [-%s] [file ...]", pdata->shopts);
   } else if (pdata->error == 3)
-    fprintf(stderr, "e_cat: system memory error");
+    fprintf(stderr, "e_cat: system memory access error");
 }
