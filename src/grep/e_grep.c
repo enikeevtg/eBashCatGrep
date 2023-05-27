@@ -1,7 +1,7 @@
 /*  e_grep
  *  (c) T. Enikeev
  *  zeftyrst@student.21-school.ru
- *  Коды ошибок error:
+ *  Коды ошибок errcode:
  *  1 - system memory access error
  *  2 - too few arguments
  *  3 - illegal option
@@ -32,7 +32,7 @@ typedef struct {
   char** files;      // pointers to argv contains files
   char** t_files;    // pointers to argv contains files contain templs
   int templs_num;    // quantity of templates
-  int error;         // error code
+  int errcode;       // error code
   int error_ch;      // error symbol
   char* error_file;  // error file name
 } data_t;
@@ -65,19 +65,19 @@ int main(int argc, char** argv) {
   data.files = (char**)calloc(argc, sizeof(char*));
   data.t_files = (char**)calloc(argc, sizeof(char*));
   data.templs_num = argc;
-  data.error = 0;
+  data.errcode = 0;
   data.error_ch = '\0';
 
-  if (!data.templs || !data.files || !data.t_files) data.error = 1;
+  if (!data.templs || !data.files || !data.t_files) data.errcode = 1;
 
   // E_GREP() FUNCTION LAUNCH
-  if (argc > 2 && !data.error)
+  if (argc > 2 && !data.errcode)
     e_grep(argc, argv, &data);
   else
-    data.error = 2;
+    data.errcode = 2;
 
   // ERROR PROCESSING
-  if (data.error > 0)  // <=> if (data.error != 0)
+  if (data.errcode > 0)  // <=> if (data.errcode != 0)
     error_print(&data);
   else {
     opt_print(&data);
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
   mem_free(argc, &data);
 
 printf("\n---------------------------------------------------------------\n");
-  return 0;  // data.error;  NULL just for testing by Makefile script!
+  return 0;  // data.errcode;  NULL just for testing by Makefile script!
 }
 
 /*===================================================================================
@@ -104,15 +104,21 @@ void e_grep(int argc, char** argv, data_t* dp) {
   printf("e_grep start\n");
   #endif
   // OPTION, TEMPLATE after -e or T_FILE after -f:
-  for (int i = 1; i < argc && !dp->error; i++)
+  for (int i = 1; i < argc && !dp->errcode; i++)
     if (argv[i][0] == '-' && argv[i][1])
       opt_def(argc, argv, i, dp);
+  // if option -l detected
+  if(dp->opt_mask[4]) {
+    for (int i = 0; i < OPTS_NUM; i++)
+      dp->opt_mask[i] = 0;
+    dp->opt_mask[4] = 1;
+  }
 
   // PATTERN AND TARGET FILES:
   #ifdef DEBUG
   printf("patterns start\n");
   #endif
-  for (int i = 1; i < argc && !dp->error; i++) {
+  for (int i = 1; i < argc && !dp->errcode; i++) {
     if ((argv[i][0] != '-' || (argv[i][0] == '-' && argv[i][1] == '\0')) &&
         !dp->t_xst) {
       dp->templs[i] = argv[i];
@@ -127,7 +133,7 @@ void e_grep(int argc, char** argv, data_t* dp) {
   printf("delete duplicate t_files start\n");
   #endif
   // READING T_FILES:
-  for (int i = 1; i < argc && !dp->error; i++) {
+  for (int i = 1; i < argc && !dp->errcode; i++) {
     while (!dp->t_files[i] && i < argc - 1) i++;
     if (dp->t_files[i]) t_file_read(argc, dp, i);
   }
@@ -135,7 +141,7 @@ void e_grep(int argc, char** argv, data_t* dp) {
   printf("delete duplicate templates start\n");
   #endif
   // DUPLICATE TEMPLATES DELETION:
-  for (int i = 1; i < dp->templs_num && !dp->error; i++) {
+  for (int i = 1; i < dp->templs_num && !dp->errcode; i++) {
     while (!dp->templs[i] && i < dp->templs_num - 1) i++;
     if (dp->templs[i]) del_dupl(argc, dp->templs, i);
   }
@@ -145,7 +151,7 @@ void e_grep(int argc, char** argv, data_t* dp) {
   #endif
 
   // FILE* fp = NULL;
-  // if (!dp->error)
+  // if (!dp->errcode)
   //   for (int i = 1; i < argc; i++) {
   //     while (!dp->files[i])
   //       i++;
@@ -170,11 +176,11 @@ void opt_def(int argc, char** argv, int index, data_t* dp) {
   #endif
   int i = 1;
   while (argv[index][i] && !dp->templs[index] && !dp->t_files[index] &&
-         !dp->error) {
+         !dp->errcode) {
     // input symbol position in shopts:
     char* opt_pos = e_strchr(dp->shopts, argv[index][i]);
     if (opt_pos == NULL) {
-      dp->error = 3;
+      dp->errcode = 3;
       dp->error_ch = argv[index][i];
     } else {
       dp->opt_mask[opt_pos - dp->shopts] = 1;
@@ -201,7 +207,7 @@ void opt_e(int argc, char** argv, data_t* dp, int index, int i) {
   } else if (index + 1 < argc) {
     dp->templs[index + 1] = argv[index + 1];
   } else {
-    dp->error = 5;
+    dp->errcode = 5;
     dp->error_ch = 'e';
   }
   #ifdef DEBUG
@@ -218,7 +224,7 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
   #endif
   dp->t_xst = TRUE;
   if (index + 1 == argc) {
-    dp->error = 5;
+    dp->errcode = 5;
     dp->error_ch = 'f';
   } else if (argv[index][i + 1] != '\0') {
     dp->t_files[index] = argv[index] + i + 1;
@@ -238,7 +244,7 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
 void t_file_check(data_t* dp, int i) {
   FILE* fp = fopen(dp->t_files[i], "r");
   if (!fp) {
-    dp->error = 4;  // no such file or directory
+    dp->errcode = 4;  // no such file or directory
     dp->error_file = dp->t_files[i];
   }
 }
@@ -257,22 +263,22 @@ void t_file_read(int argc, data_t* dp, int i) {
     ssize_t read_bytes;
     size_t line_len = 64;
     char* line = NULL;
-    while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !dp->error) {
+    while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !dp->errcode) {
       line[read_bytes - 1] = '\0';  // character replacement: '\n' -> '\0'
       dp->templs_num++;
       dp->templs = (char**)realloc(dp->templs, dp->templs_num * sizeof(char*));
       dp->templs[dp->templs_num - 1] = (char*)calloc(read_bytes, sizeof(char));
       if (dp->templs == NULL)
-        dp->error = 1;  // system memory access error
+        dp->errcode = 1;  // system memory access error
       else
         e_strcpy(dp->templs[dp->templs_num - 1], line);
     }
     if (line) free(line);  // END OF READING LINES
     if (fclose(fp)) {  // if success, fclose returns 0
-      dp->error = 6;  // file processing error
+      dp->errcode = 6;  // file processing error
       dp->error_file = dp->t_files[i];
       error_print(dp);
-      dp->error = 0;
+      dp->errcode = 0;
     }
   }
   #ifdef DEBUG
@@ -322,23 +328,23 @@ void del_dupl(int argc, char** str_array, int i) {
                               Error processing
 ===================================================================================*/
 // void error_print(data_t* dp) {
-//   if (dp->error == 1) {
+//   if (dp->errcode == 1) {
 //     fprintf(stderr, "e_grep: system memory access error\n");
-//   } else if (dp->error == 2) {
+//   } else if (dp->errcode == 2) {
 //     fprintf(stderr, "e_grep: too few arguments\n");
-//   } else if (dp->error == 3) {
+//   } else if (dp->errcode == 3) {
 //     fprintf(stderr, "e_grep: illegal option -- %c\n", dp->error_ch);
 //     fprintf(stderr, "usage: e_grep [-%s] [pattern] [file ...]\n",
 //     dp->shopts);
-//   } else if (dp->error == 4) {
+//   } else if (dp->errcode == 4) {
 //     fprintf(stderr, "e_grep: %s: no such file or directory\n",
 //             dp->error_file);
-//   } else if (dp->error == 5) {
+//   } else if (dp->errcode == 5) {
 //     fprintf(stderr, "e_grep: option requires an argument -- %c\n",
 //             dp->error_ch);
 //     fprintf(stderr, "usage: e_grep [-%s] [pattern] [file ...]\n",
 //     dp->shopts);
-//   } else if (dp->error == 6) {
+//   } else if (dp->errcode == 6) {
 //     fprintf(stderr, "e_grep: %s: file processing error\n", dp->error_file);
 //   }
 // }
@@ -360,23 +366,23 @@ void mem_free(int argc, data_t* dp) {
 
 //---------------------------FOR_TESTS_WITH_MAKEFILE_SCRIPT------------------------------
 void error_print(data_t* dp) {
-  if (dp->error == 1) {
+  if (dp->errcode == 1) {
     fprintf(stdout, "e_grep: system memory access error\n");
-  } else if (dp->error == 2) {
+  } else if (dp->errcode == 2) {
     fprintf(stdout, "e_grep: too few arguments\n\n\n");
-  } else if (dp->error == 3) {
+  } else if (dp->errcode == 3) {
     fprintf(stdout, "e_grep: illegal option -- %c\n", dp->error_ch);
     fprintf(stdout, "usage: e_grep [-%s] [pattern] [file ...]\n",
             dp->shopts);
-  } else if (dp->error == 4) {
+  } else if (dp->errcode == 4) {
     fprintf(stdout, "e_grep: %s: no such file or directory\n",
             dp->error_file);
-  } else if (dp->error == 5) {
+  } else if (dp->errcode == 5) {
     fprintf(stdout, "e_grep: option requires an argument -- %c\n",
             dp->error_ch);
     fprintf(stdout, "usage: e_grep [-%s] [pattern] [file ...]\n",
             dp->shopts);
-  } else if (dp->error == 6) {
+  } else if (dp->errcode == 6) {
     fprintf(stdout, "e_grep: %s: file processing error\n", dp->error_file);
   } 
 }

@@ -7,7 +7,7 @@ typedef struct {
   int lopts_num;
   int* opt_mask;  // Массив индикации введённых флагов
   int nonopt_index;  // Номер первого элемента не флага в argv
-  int error;      // Код ошибки
+  int errcode;      // Код ошибки
   char error_ch;  // Символ ошибочного флага
 } data_t;
 

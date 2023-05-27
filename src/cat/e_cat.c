@@ -1,10 +1,10 @@
 /*  e_cat
  *  (c) T. Enikeev
  *  zeftyrst@student.21-school.ru
- *  Коды ошибок error:
+ *  Коды ошибок errcode:
  *  1 - illegal option
  *  2 - no such file or directory
- *  3 - system memory error
+ *  3 - system memory errcode
  *
  *  Комментарий к обработке случая флага -e, -t, или -v:
  *  [NULL...Backspace] || [Vertical Tab...Unit Separator] ->
@@ -42,26 +42,26 @@ int main(int argc, char** argv) {
     *(data.lopts + 1) = "--number-nonblank";
     *(data.lopts + 2) = "--number";
   } else
-    data.error = 3;
+    data.errcode = 3;
   data.lopts_num = LOPTS_NUM;
   int array[SHOPTS_NUM] = {0};
   data.opt_mask = array;
-  data.error = 0;
+  data.errcode = 0;
   data.error_ch = '\0';
   data.nonopt_index = 0;
 
   // ЗАПУСК ОСНОВНОЙ ФУНКЦИИ ПРОГРАММЫ
-  if (!data.error)  // <=> if (data.error == 0)
+  if (!data.errcode)  // <=> if (data.errcode == 0)
     e_cat(argc, argv, &data);
 
   // ОБРАБОТКА ОШИБОК
-  if (data.error)  // <=> if (data.error != 0)
+  if (data.errcode)  // <=> if (data.errcode != 0)
     error_print(&data);
 
   // ОСВОБОЖДЕНИЕ ПАМЯТИ
-  if (data.error != 3) free(data.lopts);
+  if (data.errcode != 3) free(data.lopts);
 
-  return data.error;
+  return data.errcode;
 }
 
 /*===================================================================================
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 void e_cat(int argc, char** argv, data_t* pdata) {
   if (argc > 1) opt_def(argc, argv, pdata);
 
-  for (int i = pdata->nonopt_index; i < argc && pdata->error == 0; i++) {
+  for (int i = pdata->nonopt_index; i < argc && pdata->errcode == 0; i++) {
     FILE* fp = stdin;  // т.е. по умолчанию при отсутствии имени файла будем
                        // считывать stdin
 
@@ -151,9 +151,9 @@ void print_ch(FILE* fp, int* opt_mask) {
                               Обработка ошибок
 ===================================================================================*/
 void error_print(data_t* pdata) {
-  if (pdata->error == 1) {  // ОБРАБОТКА ОШИБКИ 1 illegal option
+  if (pdata->errcode == 1) {  // ОБРАБОТКА ОШИБКИ 1 illegal option
     fprintf(stderr, "e_cat: illegal option -- %c\n", pdata->error_ch);
     fprintf(stderr, "usage: e_cat [-%s] [file ...]", pdata->shopts);
-  } else if (pdata->error == 3)
-    fprintf(stderr, "e_cat: system memory access error");
+  } else if (pdata->errcode == 3)
+    fprintf(stderr, "e_cat: system memory access errcode");
 }

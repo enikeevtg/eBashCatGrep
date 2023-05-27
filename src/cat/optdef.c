@@ -9,7 +9,7 @@
 ===================================================================================*/
 void opt_def(int argc, char** argv, data_t* pdata) {
   int stop_argv = 0;
-  for (int i = 1; i < argc && !(pdata->error) && !stop_argv; i++) {
+  for (int i = 1; i < argc && !(pdata->errcode) && !stop_argv; i++) {
     int argvi_len = e_strlen(argv[i]);  // Длина строки argv[i]
 
     // Проверка односимвольных флагов (в argv[i] НЕТ второго знака "-")
@@ -34,10 +34,10 @@ void opt_def(int argc, char** argv, data_t* pdata) {
 ===================================================================================*/
 void shopt_ident(char* argvi, data_t* pdata) {
   int i = 0;
-  while (argvi[++i] && !pdata->error) {
+  while (argvi[++i] && !pdata->errcode) {
     char* opt_pos = e_strchr(pdata->shopts, argvi[i]);
     if (opt_pos == NULL) {
-      pdata->error = 1;
+      pdata->errcode = 1;
       pdata->error_ch = argvi[i];
     } else
       pdata->opt_mask[opt_pos - pdata->shopts] = 1;
@@ -56,7 +56,7 @@ void lopt_ident(char* argvi, data_t* pdata) {
       match--;
   }
   if (!match) {
-    pdata->error = 1;
+    pdata->errcode = 1;
     pdata->error_ch = '-';
   }
 }
