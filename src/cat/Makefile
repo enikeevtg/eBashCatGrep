@@ -14,12 +14,11 @@
 #				 																																	  #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-
 CC = gcc
 CF = -c -Wall -Werror -Wextra
 COM = ../common/
-SRC = e_cat.c optdef.c
-OBJ = e_cat.o optdef.o
+SRC = main.c e_cat.c
+OBJ = main.o e_cat.o
 LIB = String
 EXE = e_cat
 STD = -std=c11 -pedantic
@@ -29,11 +28,11 @@ e_cat: $(OBJ) lib
 	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)
 	rm -rf *.o
 
+main.o:
+	$(CC) $(CF) main.c $(STD)
+
 e_cat.o:
 	$(CC) $(CF) e_cat.c $(STD)
-
-optdef.o: 
-	$(CC) $(CF) optdef.c $(STD)
 
 lib: $(COM)e_string.o
 	ar rv $(COM)libString.a $^
@@ -53,7 +52,7 @@ rebuild: clean e_cat
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #				 																																	  #
-#    Справка по созданию библиотеки																					#
+#    Справка по созданию статичесой библиотеки:															#
 #    -L$(COM) - опция -L и адрес каталога относительно Makefile,						#
 #              где при компоновке искать файл библиотеки										#
 #    -lmylib - опция -l и имя файла библиотеки libmylib.a без расширения и	#
