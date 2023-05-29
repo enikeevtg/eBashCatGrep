@@ -8,7 +8,7 @@
 int main(int argc, char** argv) {
 #ifdef DEBUG
   printf("---------------------------------------------------------------\n");
-#endif
+#endif  // DEBUG
   // DATA_T DATA INITIALIZATION
   data_t data = {0};  // data_t is type of struct variable
   data.shopts = "eivclnhsfo";
@@ -31,12 +31,12 @@ int main(int argc, char** argv) {
     data.errcode = 2;
 
   // ERROR PROCESSING
-if (data.errcode > 0)  // <=> if (data.errcode != 0)
-  error_print(&data);
+  if (data.errcode > 0)  // <=> if (data.errcode != 0)
+    error_print(&data);
 #ifdef DEBUG
   else {
-    printf("\n"); 
-    array_print(argv, argc);
+    printf("\n\tinput data: ");
+    array_print(argv + 1, argc - 1);
     printf("\n\t");
     opt_print(&data);
     printf("\n\tTEMPLATES: ");
@@ -47,10 +47,14 @@ if (data.errcode > 0)  // <=> if (data.errcode != 0)
     array_print(data.t_files, argc);
   }
   printf("\n---------------------------------------------------------------\n");
-#endif
+#endif  // DEBUG
 
   // FREEING MEMORY
   mem_free(argc, &data);
 
-  return 0;  // data.errcode;  NULL just for testing by Makefile script!
+#ifndef DEBUG
+  return data.errcode;
+#else
+  return 0;
+#endif
 }

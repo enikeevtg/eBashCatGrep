@@ -34,14 +34,16 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i);
 void t_file_check(data_t* dp, int i);
 void file_closing(FILE* fp, data_t* dp, int i);
 void t_file_read(int argc, data_t* dp, int i);
-void del_dupl(int argc, char** str_array, int i);
-// void match_search();
+int del_dupl(int argc, char** str_array, int i);
+void match_searching(FILE* fp, data_t* dp, int index);
 // void print_match(int argc, data_t* dp);
 void error_print(data_t* dp);
 void mem_free(int argc, data_t* dp);
 
+#ifdef DEBUG
 void opt_print(data_t* dp);
 void array_print(char** array, int argc);
+#endif  // DEBUG
 //----------------------------------------------------------------------------------
 
 #endif  // E_GREP

@@ -17,8 +17,8 @@
 ===================================================================================*/
 void e_grep(int argc, char** argv, data_t* dp) {
 #ifdef DEBUG
-  printf("e_grep start\n");
-#endif
+  printf("e_grep was launched\n");
+#endif  // DEBUG
   // OPTION, TEMPLATE after -e or T_FILE after -f:
   for (int i = 1; i < argc && !dp->errcode; i++)
     if (argv[i][0] == '-' && argv[i][1]) opt_def(argc, argv, i, dp);
@@ -28,10 +28,10 @@ void e_grep(int argc, char** argv, data_t* dp) {
     dp->opt_mask[4] = 1;
   }
 
-// PATTERN AND TARGET FILES:
 #ifdef DEBUG
-  printf("patterns start\n");
-#endif
+  printf("patterns and files was launched\n");
+#endif  // DEBUG
+  // PATTERN AND TARGET FILES:
   for (int i = 1; i < argc && !dp->errcode; i++) {
     if ((argv[i][0] != '-' || (argv[i][0] == '-' && argv[i][1] == '\0')) &&
         !dp->t_exist) {
@@ -43,61 +43,86 @@ void e_grep(int argc, char** argv, data_t* dp) {
     }
   }
 #ifdef DEBUG
-  printf("patterns finish\n");
-  printf("delete duplicate t_files start\n");
-#endif
+  printf("patterns and files has ended\n");
+  printf("duplicate files deletion was launched\n");
+#endif  // DEBUG
+  // DUPLICATE TARGET FILES DELETION:
+  for (int i = 1; i < dp->templs_num && !dp->errcode; i++) {
+    while (!dp->files[i] && i < argc - 1) i++;
+    if (dp->files[i]) del_dupl(argc, dp->files, i);
+  }
+#ifdef DEBUG
+  printf("duplicate files deletion has ended\n");
+  printf("duplicate t_files deletion was launched\n");
+#endif  // DEBUG
   // READING T_FILES:
   for (int i = 1; i < argc && !dp->errcode; i++) {
     while (!dp->t_files[i] && i < argc - 1) i++;
     if (dp->t_files[i]) t_file_read(argc, dp, i);
   }
 #ifdef DEBUG
-  printf("delete duplicate t_files finish\n");
-  printf("delete duplicate templates start\n");
-#endif
+  printf("t_files deletion has ended\n");
+  printf("templates deletion was launched\n");
+#endif  // DEBUG
   // DUPLICATE TEMPLATES DELETION:
   for (int i = 1; i < dp->templs_num && !dp->errcode; i++) {
     while (!dp->templs[i] && i < dp->templs_num - 1) i++;
     if (dp->templs[i]) del_dupl(argc, dp->templs, i);
   }
 #ifdef DEBUG
-  printf("delete duplicates finish\n");
-#endif
+  printf("temples deletion has ended\n");
+#endif  // DEBUG
 
   FILE* fp = NULL;
-  for (int i = 1; i < argc && !dp->errcode; i++) {
-    while (!dp->files[i] && i < argc - 1) i++;
+  for (int i = 0; dp->files[i] && !dp->errcode; i++) {
     fp = fopen(dp->files[i], "r");
     if (fp)
-      match_searching(fp, dp);  
-    else
-      fprintf(stderr, "e_cat: %s: No such file or directory\n", dp->files[i]);
+      match_searching(fp, dp, i);
+    else if (dp->files[i] && !fp)
+      fprintf(stdout, "e_grep: %s: No such file or directory\n", dp->files[i]);
   }
 
 
 
 #ifdef DEBUG
-  printf("e_grep finish\n");
-#endif
+  printf("e_grep has ended\n");
+#endif  // DEBUG
 }
 
 /*===================================================================================
                                 Matches searching
 ===================================================================================*/
-void print_match(FILE* fp, data_t* dp) {
+void match_searching(FILE* fp, data_t* dp, int index) {
+#ifdef DEBUG
+  printf("match_searching() was launched\n");
+#endif  // DEBUG
   ssize_t read_bytes = 0;
   char* line = NULL;
   size_t line_len = 64;
+  int line_num = 0;
 
-  while (read_bytes = getline(&line, &line_len, fp) != -1) {
-    regex_t pattern;
-    for (int j = 1; j < dp->templs_num; j++) {
-      while (!dp->files[j] && j < dp->templs_num - 1) j++;
-      if (dp->files[j]) {
-
-      }
+  while ((read_bytes = getline(&line, &line_len, fp)) != -1) {
+    line_num++;
+    size_t nmatch = 1;
+    regmatch_t pmatch[1] = {0};
+    int cflags = REG_EXTENDED;
+    int eflags = 0;
+    for (int i = 0; dp->templs[i]; i++) {
+      regex_t cur_templ;
+      if (regcomp(&cur_templ, dp->templs[i], cflags) == 0) {  // success retuns 0
+        if (regexec(&cur_templ, line, nmatch, pmatch, eflags) == 0) {
+          // for (regoff_t j = pmatch->rm_so; j < pmatch->rm_eo; j++) 
+          //   printf("\t\tregexec: j=%lld, %c\n", j, line[j]);
+          printf("%s:%d:%s", dp->files[index], line_num, line);
+        }
+      regfree(&cur_templ);
+      }      
     }
   }
+  free(line);
+#ifdef DEBUG
+  printf("match_searching() has ended\n");
+#endif  // DEBUG
 }
 
 
@@ -106,8 +131,8 @@ void print_match(FILE* fp, data_t* dp) {
 ===================================================================================*/
 void opt_def(int argc, char** argv, int index, data_t* dp) {
 #ifdef DEBUG
-  printf("opt_def start\n");
-#endif
+  printf("opt_def() was launched\n");
+#endif  // DEBUG
   int i = 1;
   while (argv[index][i] && !dp->templs[index] && !dp->t_files[index] &&
          !dp->errcode) {
@@ -124,8 +149,8 @@ void opt_def(int argc, char** argv, int index, data_t* dp) {
     i++;
   }
 #ifdef DEBUG
-  printf("opt_def finish\n");
-#endif
+  printf("opt_def() has ended\n");
+#endif  // DEBUG
 }
 
 /*===================================================================================
@@ -133,8 +158,8 @@ void opt_def(int argc, char** argv, int index, data_t* dp) {
 ===================================================================================*/
 void opt_e(int argc, char** argv, data_t* dp, int index, int i) {
 #ifdef DEBUG
-  printf("opt_e start\n");
-#endif
+  printf("\t├──opt_e() was launched\n");
+#endif  // DEBUG
   dp->t_exist = TRUE;
   if (argv[index][i + 1] != '\0') {
     dp->templs[index] = argv[index] + i + 1;
@@ -145,8 +170,8 @@ void opt_e(int argc, char** argv, data_t* dp, int index, int i) {
     dp->error_ch = 'e';
   }
 #ifdef DEBUG
-  printf("opt_e finish\n");
-#endif
+  printf("\t└──opt_e() has ended\n");
+#endif  // DEBUG
 }
 
 /*===================================================================================
@@ -154,10 +179,10 @@ void opt_e(int argc, char** argv, data_t* dp, int index, int i) {
 ===================================================================================*/
 void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
 #ifdef DEBUG
-  printf("opt_f start\n");
-#endif
+  printf("\t├──opt_f() was launched\n");
+#endif  // DEBUG
   dp->t_exist = TRUE;
-  if (index + 1 == argc) {
+  if (index == argc - 1) {
     dp->errcode = 5;
     dp->error_ch = 'f';
   } else if (argv[index][i + 1] != '\0') {
@@ -168,8 +193,8 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
     t_file_check(dp, index + 1);
   }
 #ifdef DEBUG
-  printf("opt_f finish\n");
-#endif
+  printf("\t└──opt_f() has ended\n");
+#endif  // DEBUG
 }
 
 /*===================================================================================
@@ -202,13 +227,13 @@ void file_closing(FILE* fp, data_t* dp, int i) {
 ===================================================================================*/
 void t_file_read(int argc, data_t* dp, int i) {
 #ifdef DEBUG
-  printf("t_file_read start\n");
-#endif
-  del_dupl(argc, dp->t_files, i);
+  printf("\t├──t_file_read() was launched: %s\n", dp->t_files[i]);
+#endif  // DEBUG
+  i = del_dupl(argc, dp->t_files, i);
   FILE* fp = NULL;
   if (dp->t_files[i]) {
     fp = fopen(dp->t_files[i], "r");
-    // READING LINES FROM T_FILE TO TEMPLATES ARRAY:
+    // START OF READING LINES FROM T_FILE TO TEMPLATES ARRAY:
     ssize_t read_bytes = 0;
     char* line = NULL;
     size_t line_len = 64;
@@ -226,41 +251,45 @@ void t_file_read(int argc, data_t* dp, int i) {
       else
         e_strcpy(dp->templs[dp->templs_num - 1], line);  
     }
-    free(line);  // END OF READING LINES
+    free(line);
+    // END OF READING LINES
     file_closing(fp, dp, i);
   }
 #ifdef DEBUG
-  printf("t_file_read finish\n");
-#endif
+  printf("\t└──t_file_read() has ended: %s\n", dp->t_files[i]);
+#endif  // DEBUG
 }  // 27 lines
 
 /*===================================================================================
                             Duplicates deletion function
 ===================================================================================*/
-void del_dupl(int argc, char** str_array, int i) {
+int del_dupl(int argc, char** str_array, int i) {
 #ifdef DEBUG
-  printf("del_dupl start\n");
-#endif
+  printf("\t├──del_dupl() was launched: %s\n", str_array[i]);
+#endif  // DEBUG
   bool duplicate = FALSE;
-  for (int j = 1; j < i && !duplicate; j++) {
-    while (!str_array[j] && j < i - 1) j++;
-    if (str_array[j] && e_strcmp(str_array[j], str_array[i]) == 0) {
-#ifdef DEBUG
-      printf("%s\n", str_array[i]);
-#endif
-      if (i < argc) {
-        str_array[i] = NULL;
-        duplicate = TRUE;
-      } else {
+  // squeezing:
+  int j = 0;
+  while (str_array[j]) j++;
+  str_array[j] = str_array[i];
+  str_array[i] = NULL;
+  i = j;
+  // duplicates deletion:
+  for (int k = 0; k < i && !duplicate; k++) {
+    if (e_strcmp(str_array[k], str_array[i]) == 0) {
+      duplicate = TRUE;
+      if (i >= argc)  // -> memory allocated by developer
         free(str_array[i]);
-        str_array[i] = NULL;
-        duplicate = TRUE;
-      }
+      str_array[i] = NULL;
+#ifdef DEBUG
+  printf("\t│   \t└──DUPLICATE DETECTED!\n");
+#endif  // DEBUG
     }
   }
 #ifdef DEBUG
-  printf("del_dupl finish\n");
-#endif
+  printf("\t└──del_dupl() has ended: %s\n", str_array[i]);
+#endif  // DEBUG
+  return i;
 }  // 16 lines
 
 /*===================================================================================
@@ -286,7 +315,7 @@ void error_print(data_t* dp) {
     fprintf(stderr, "e_grep: %s: file processing error\n", dp->error_file);
   }
 }
-#else
+#else  // DEBUG
 //---------------------------FOR_DEBUG_WITH_MAKEFILE_SCRIPT------------------------------
 void error_print(data_t* dp) {
   if (dp->errcode == 1) {
@@ -307,7 +336,7 @@ void error_print(data_t* dp) {
     fprintf(stdout, "e_grep: %s: file processing error\n", dp->error_file);
   }
 }
-#endif
+#endif  // DEBUG
 
 /*===================================================================================
                                   Freeing memory:
@@ -324,6 +353,7 @@ void mem_free(int argc, data_t* dp) {
   if (dp->t_files) free(dp->t_files);
 }
 
+#ifdef DEBUG
 void opt_print(data_t* dp) {
   printf("OPTIONS: ");
   for (int i = 0; i < OPTS_NUM; i++)
@@ -332,5 +362,7 @@ void opt_print(data_t* dp) {
 
 void array_print(char** array, int argc) {
   for (int i = 0; i < argc; i++)
-    if (array[i] != NULL) printf("%s\t", array[i]);
+    if (array[i] != NULL)
+    printf("%s\t", array[i]);
 }
+#endif  // DEBUG
