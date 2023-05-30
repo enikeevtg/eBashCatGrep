@@ -23,6 +23,7 @@ LIB = String
 EXE = e_cat
 STD = -std=c11 -pedantic
 
+.PHONY: e_cat
 
 e_cat: $(OBJ) lib
 	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)

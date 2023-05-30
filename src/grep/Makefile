@@ -24,13 +24,16 @@ EXE = e_grep
 STD = -std=c11 -pedantic
 DEB = -D DEBUG
 
+.PHONY: e_grep
 
 e_grep: main.o e_grep.o lib
 	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)
 	rm *.o
+	cp e_grep test_grep/
 
 test:
-	sh test_grep/
+	cp e_grep test_grep/
+	sh test_grep/test_func_grep.sh
 
 main.o:
 	$(CC) $(CF) main.c $(STD)

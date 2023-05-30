@@ -18,9 +18,10 @@ typedef struct {
   bool* opt_mask;    // short options mask array
   bool t_exist;      // Template input existing flag
   char** templs;     // pointers to argv contains templates
-  char** files;      // pointers to argv contains files
-  char** t_files;    // pointers to argv contains files contain templs
   int templs_num;    // quantity of templates
+  char** files;      // pointers to argv contains files
+  int files_num;     // quantity of target files
+  char** t_files;    // pointers to argv contains files contain templs
   int errcode;       // error code
   int error_ch;      // error symbol
   char* error_file;  // error file name
@@ -32,10 +33,10 @@ void opt_def(int argc, char** argv, int index, data_t* dp);
 void opt_e(int argc, char** argv, data_t* dp, int index, int i);
 void opt_f(int argc, char** argv, data_t* dp, int index, int i);
 void t_file_check(data_t* dp, int i);
-void file_closing(FILE* fp, data_t* dp, int i);
+void file_closing(FILE* fp, data_t* dp);
 void t_file_read(int argc, data_t* dp, int i);
 int del_dupl(int argc, char** str_array, int i);
-void match_searching(FILE* fp, data_t* dp, int index);
+void match_processing(FILE* fp, data_t* dp, int f_index);
 // void print_match(int argc, data_t* dp);
 void error_print(data_t* dp);
 void mem_free(int argc, data_t* dp);

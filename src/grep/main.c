@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
 #endif  // DEBUG
   // DATA_T DATA INITIALIZATION
   data_t data = {0};  // data_t is type of struct variable
-  data.shopts = "eivclnhsfo";
+  data.shopts = "noheivclsf";
   bool array[OPTS_NUM] = {0};
   data.opt_mask = array;
   data.t_exist = FALSE;
