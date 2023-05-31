@@ -85,6 +85,10 @@ e_grep_deb.o:
 
 debug: e_grep_deb
 	echo ---------------------------------------------------------------
+	./e_grep s test_grep/test_0_grep.txt -o
+
+ngbfdc:
+	./e_grep -nivh = test_grep/test_1_grep.txt test_grep/test_2_grep.txt
 	./e_grep -e A -ne12345678 text.txt
 	./e_grep -ne12345678 text.txt
 	./e_grep -e A text.txt -e n
@@ -124,3 +128,5 @@ debug: e_grep_deb
 	./e_grep test text.txt -
 	./e_grep - text.txt -en
 	./e_grep - text.txt
+	./e_grep -c -e . test_1_grep.txt -e '.'
+

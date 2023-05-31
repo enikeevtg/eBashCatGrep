@@ -107,7 +107,7 @@ void print_ch(FILE* fp, int* opt_mask) {
   char prev_symb = '\n';  // Предыдущий прочитанный из файла символ
   char symb = '\0';  // Текущий прочитанный из файла символ
   int line_counter = 0;
-  bool print_access = TRUE;
+  bool enabl_print = TRUE;
 
   while ((symb = getc(fp)) != EOF) {
     // -b || --number-nonblank:
@@ -118,10 +118,10 @@ void print_ch(FILE* fp, int* opt_mask) {
     // -s || --squeeze_blank:
     if (opt_mask[1] && symb == '\n' && prev_symb == '\n' &&
         prev_prev_symb == '\n')
-      print_access = FALSE;
+      enabl_print = FALSE;
 
     // -n || --number, но нет (-b || --number-nonblank):
-    if (opt_mask[2] && !opt_mask[0] && prev_symb == '\n' && print_access)
+    if (opt_mask[2] && !opt_mask[0] && prev_symb == '\n' && enabl_print)
       printf("%6d\t",
              ++line_counter);  // ++line_counter: сначала ++, затем -> stdin
 
@@ -129,29 +129,29 @@ void print_ch(FILE* fp, int* opt_mask) {
     if (opt_mask[3] || opt_mask[5] || opt_mask[7]) {
       if ((symb >= 0 && symb <= 8) || (symb >= 11 && symb <= 31)) {
         printf("^%c", symb + 64);
-        print_access = FALSE;
+        enabl_print = FALSE;
       }
       if (symb == 127) {  // DEL -> '?' (63)
         printf("^%c", 63);
-        print_access = FALSE;
+        enabl_print = FALSE;
       }
     }
 
     // -e || -E:
-    if ((opt_mask[3] || opt_mask[4]) && symb == '\n' && print_access)
+    if ((opt_mask[3] || opt_mask[4]) && symb == '\n' && enabl_print)
       printf("$");
 
     // -t || -T:
     if ((opt_mask[5] || opt_mask[6]) && symb == '\t') {
       printf("^I");
-      print_access = FALSE;
+      enabl_print = FALSE;
     }
 
-    if (print_access) putchar(symb);
+    if (enabl_print) putchar(symb);
 
     prev_prev_symb = prev_symb;
     prev_symb = symb;
-    print_access = TRUE;
+    enabl_print = TRUE;
   }
 }
 

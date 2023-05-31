@@ -1,14 +1,15 @@
 /*  e_grep.c
  *  (c) T. Enikeev
  *  zeftyrst@student.21-school.ru
- *                   0 1 2 3 4 5 6 7 8 9
- *  short options = "n o h e i v c l s f"
+ *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
+ *     short options: n o h e i v c l s f
  *  Коды ошибок errcode:
  *  1 - system memory access error
  *  2 - too few arguments
  *  3 - illegal option
  *  4 - no such file or directory (include -f oprion template file)
  *  5 - option requires argument (-e and -f)
+ *  7 - target file is required
  *  6 - file processing error (close(fp) == 0)
  */
 
@@ -23,81 +24,76 @@ void e_grep(int argc, char** argv, data_t* dp) {
 #endif  // DEBUG
 
   // OPT_MASK AND TEMPS after -e option or T_FILES after -f option:
-  for (int i = 1; i < argc && !dp->errcode; i++)
-    if (argv[i][0] == '-' && argv[i][1]) opt_def(argc, argv, i, dp);
+  opt_def(argc, argv, dp);
 
 #ifdef DEBUG
   printf("patterns and files was launched\n");
 #endif  // DEBUG
 
-  // TEMPLATES AND FILES:
-  for (int i = 1; i < argc && !dp->errcode; i++) {
-    if ((argv[i][0] != '-' || (argv[i][0] == '-' && argv[i][1] == '\0')) &&
-        !dp->t_exist) {
-      dp->templs[i] = argv[i];
-      dp->t_exist = TRUE;
+  if (!dp->errcode) {
+    // TEMPLATES AND FILES:
+    nonopt_def(argc, argv, dp);
+    // FILES ARRAY SQUEEZING:
+    array_squeezing(argc, dp->files);
+  }
+
+  if (!(*dp->files)) {
+    dp->errcode = 6;  // target file is required
+  } else {
+#ifdef DEBUG
+    printf("patterns and files has ended successfully\n");
+    printf("t_files array reading was launched\n");
+#endif  // DEBUG
+
+    // DUPLICATE T_FILES DELETION:
+    for (int i = 1; i < argc && !dp->errcode; i++) {
+#ifdef DEBUG
+      printf("duplicate t_files deletion was launched\n");
+#endif  // DEBUG
+
+      while (!dp->t_files[i] && i < argc - 1) i++;
+      if (dp->t_files[i]) del_dupl(argc, dp->t_files, i);
     }
-    if ((**(argv + i)) != '-' && !dp->templs[i] && !dp->t_files[i]) {
-      dp->files[i] = argv[i];
-      dp->files_num++;
-    }
-  }
+    array_squeezing(argc, dp->t_files);
 
 #ifdef DEBUG
-  printf("patterns and files has ended\n");
-  printf("duplicate files deletion was launched\n");
+    printf("duplicate temples deletion has ended\n");
 #endif  // DEBUG
 
-  // FILES ARRAY SQUEEZING:
-  for (int i = 0, j = 0; i < argc && j < argc && !dp->errcode; i++) {
-    while (!dp->files[i] && i < argc - 1) i++;
-    while (dp->files[j]) j++;
-    dp->files[j] = dp->files[i];
-    dp->files[i] = NULL;
+    // READING T_FILES:
+    t_file_read(dp);
   }
-
-#ifdef DEBUG
-  printf("duplicate files deletion has ended\n");
-  printf("duplicate t_files deletion was launched\n");
-#endif  // DEBUG
-
-  // READING T_FILES:
-  for (int i = 1; i < argc && !dp->errcode; i++) {
-    while (!dp->t_files[i] && i < argc - 1) i++;
-    if (dp->t_files[i]) t_file_read(argc, dp, i);
-  }
-
-#ifdef DEBUG
-  printf("t_files deletion has ended\n");
-  printf("templates deletion was launched\n");
-#endif  // DEBUG
 
   // DUPLICATE TEMPLATES DELETION:
   for (int i = 1; i < dp->templs_num && !dp->errcode; i++) {
+#ifdef DEBUG
+    printf("duplicate temples deletion was launched\n");
+#endif  // DEBUG
+
     while (!dp->templs[i] && i < dp->templs_num - 1) i++;
     if (dp->templs[i]) del_dupl(argc, dp->templs, i);
   }
 
 #ifdef DEBUG
-  printf("temples deletion has ended\n");
+  printf("duplicate temples deletion has ended\n");
 #endif  // DEBUG
 
+  // FILES READING:
   FILE* fp = NULL;
   for (int f_index = 0; dp->files[f_index] && !dp->errcode; f_index++) {
     fp = fopen(dp->files[f_index], "r");
-    if (fp)
-      match_processing(fp, dp, f_index);
+    if (fp) file_proc(fp, dp, f_index);
 #ifndef DEBUG
     else if (!dp->opt_mask[8])  // -s opt wasn't switched on
-      fprintf(stderr, "e_grep: %s: no such file or directory\n", dp->files[f_index]);
-#else  // DEBUG
+      fprintf(stderr, "e_grep: %s: No such file or directory\n",
+              dp->files[f_index]);
+#else   // DEBUG
     else if (!dp->opt_mask[8])  // -s opt wasn't switched on
-      fprintf(stdout, "e_grep: %s: no such file or directory\n", dp->files[f_index]);
+      fprintf(stdout, "e_grep: %s: No such file or directory\n",
+              dp->files[f_index]);
 #endif  // DEBUG
     if (fp) file_closing(fp, dp);
   }
-
-
 
 #ifdef DEBUG
   printf("e_grep has ended\n");
@@ -105,117 +101,173 @@ void e_grep(int argc, char** argv, data_t* dp) {
 }
 
 /*===================================================================================
-                                Matches searching
+                                  Match searching
 ===================================================================================*/
-void match_processing(FILE* fp, data_t* dp, int f_index) {
+void file_proc(FILE* fp, data_t* dp, int f_index) {
 #ifdef DEBUG
-  printf("match_processing() was launched\n");
+  printf("file_proc() was launched\n");
 #endif  // DEBUG
 
   // for reading file lines by getline():
   ssize_t read_bytes = 0;
   char* line = NULL;
   size_t line_len = 64;
-  int line_num = 0;  // line number
-  int m_count = 0;  // matches counter
-  bool esc_file = FALSE;  // escape file signal
-  // -l or -c options was switched on -> line not printing:
-  bool print_access = TRUE;
-  if (dp->opt_mask[6] || dp->opt_mask[7]) print_access = FALSE;
+
+  int m_count = 0;         // matches counter
+  formats_t fms = {0};     // struct for matches search init
+  fms.file_index = f_index;  // file number in files array
+  fms.line_index = 0;        // line number
+  fms.esc_file = FALSE;    // escape file signal
+  // if -o, -c or -l opts was switched on -> line not printing:
+  fms.enabl_print = TRUE;
+  if (dp->opt_mask[6] || dp->opt_mask[7])
+    fms.enabl_print = FALSE;
+  fms.enabl_opt_o = TRUE;
 
   // for regcomp:
-  int cflags = 0;
-  // -e opt was switched on:
-  if (dp->opt_mask[3]) cflags |= REG_EXTENDED;
-  // -i opt was switched on:
-  if (dp->opt_mask[4]) cflags |= REG_ICASE;
+  fms.cflags = 0;
+  // if -e opt was switched on:
+  //if (dp->opt_mask[3]) fms.cflags |= REG_EXTENDED;
+  // if -i opt was switched on:
+  if (dp->opt_mask[4]) fms.cflags |= REG_ICASE;
 
   // for regexec:
-  int eflags = 0;
+  fms.eflags = 0;
   size_t nmatch = 1;
   regmatch_t pmatch[1] = {0};
 
+
   // START OF READING LINES FROM FILE
-  while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !esc_file) {
-    line[read_bytes - 1] = '\0';
-    line_num++;
-
-    bool comp = FALSE;  // regex compilation regcomp() success
-    bool exec = FALSE;  // regex mathing regexec() success
-    bool match = FALSE;
-    // regex_t cur_templ;
-    for (int i = 0; dp->templs[i] && !esc_file && !match; i++) {
-      regex_t cur_templ;
-      comp = !regcomp(&cur_templ, dp->templs[i], cflags);
-      if (comp) exec = !regexec(&cur_templ, line, nmatch, pmatch, eflags);
-      if (exec)
-        match = TRUE;
-      regfree(&cur_templ);
-    }
-    //regfree(&cur_templ);
-/*
- *                    V   V V V V V V V V
- *  opt_mask indexes: 0 1 2 3 4 5 6 7 8 9
- *     short options: n o h e i v c l s f
- */
-    // -v opt was switched on:
-    if (dp->opt_mask[5]) match = !match;
-
-    if (match) {
-      m_count++;
-      // -l opt was switched on:
-      if (dp->opt_mask[7]) esc_file = TRUE;
-      // -h opt wasn't switched on:
-      if (!dp->opt_mask[2] && dp->files_num > 1 && print_access)
-        printf("%s:", dp->files[f_index]);
-      // -n opt was switched on:
-      if (dp->opt_mask[0] && print_access) printf("%d:", line_num);
-      // line printing:
-      if (print_access) printf("%s\n", line);
-    }
+  while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !fms.esc_file) {
+    fms.line_index++;
+    // if -n opt was switched on:
+    if (dp->opt_mask[0]) fms.enabl_opt_o = TRUE;
+    if (line_proc(dp, line, pmatch, nmatch, &fms)) m_count++;
   }
   free(line);  // END OF READING LINES FROM FILE
-  
-  // -c opt was switched on:
+
+
+  // if -c opt was switched on:
   if (dp->opt_mask[6]) {
-    if (!dp->opt_mask[2] && dp->files_num > 1) 
-      printf("%s:", dp->files[f_index]);
+    if (!dp->opt_mask[2] && dp->files_num > 1)
+      printf("%s:", dp->files[fms.file_index]);
     printf("%d\n", m_count);
   }
-
-  // -l opt was switched on:
-  if (dp->opt_mask[7] && m_count) printf("%s\n", dp->files[f_index]);
-  
+  // if -l opt was switched on:
+  if (dp->opt_mask[7] && fms.esc_file) printf("%s\n", dp->files[f_index]);
 
 #ifdef DEBUG
-  printf("match_processing() has ended\n");
+  printf("file_proc() has ended\n");
 #endif  // DEBUG
 }
 
+/*===================================================================================
+                            Line matching analysis
+===================================================================================*/
+bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
+               formats_t* fmsp) {
+#ifdef DEBUG
+  printf("\t├──line_proc() was launched\n");
+#endif  // DEBUG
+
+  // LINE ANALYSIS:
+  bool comp = FALSE;  // regex compilation regcomp() success
+  bool match_found = FALSE;
+  regex_t cur_templ;  // working good
+  for (int i = 0; i < dp->templs_num && !match_found; i++) {
+    while (!dp->templs[i] && i < dp->templs_num - 1) i++;
+    if (dp->templs[i]) {
+      // regex_t cur_templ;  // working good too
+      comp = !regcomp(&cur_templ, dp->templs[i], fmsp->cflags);  // success returns 0
+      if (comp)
+        match_found = !regexec(&cur_templ, line, nmatch, pmatch, fmsp->eflags);
+      regfree(&cur_templ);  // no leaks detected
+    }
+  }
+  // regfree(&cur_templ);  // leaks detected
+  line_print(dp, line, pmatch, &match_found, fmsp);
+
+  // if -o opt was switched on
+  if (match_found && dp->opt_mask[1] && line[pmatch->rm_eo] != '\0') {
+    fmsp->enabl_opt_o = FALSE;
+    line_proc(dp, line + pmatch->rm_eo, pmatch, nmatch, fmsp);  // recursion
+    fmsp->enabl_opt_o = TRUE;
+  }
+
+
+#ifdef DEBUG
+  printf("\t└──line_proc() has ended\n");
+#endif  // DEBUG
+
+  return match_found;
+}
+
+/*===================================================================================
+                            Line matching analysis
+===================================================================================*/
+void line_print(data_t* dp, char* line, regmatch_t* pmatch, bool* match,
+                formats_t* fmsp) {
+  /*
+   *                    V V V V V V V V V V
+   *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
+   *     short options: n o h e i v c l s f
+   */
+  // if -v opt was switched on:
+  if (dp->opt_mask[5]) *match = !*match;
+  if (*match) {
+    // if -l opt was switched on:
+    if (dp->opt_mask[7]) fmsp->esc_file = TRUE;
+    // if -h opt wasn't switched on:
+    if (!dp->opt_mask[2] && dp->files_num > 1 && fmsp->enabl_opt_o && fmsp->enabl_print)
+      printf("%s:", dp->files[fmsp->file_index]);
+    // if -n opt was switched on:
+    if (dp->opt_mask[0] && fmsp->enabl_opt_o) printf("%d:", fmsp->line_index);
+    // line printing if -o opt wasn't switched on:
+    if (!dp->opt_mask[1] && fmsp->enabl_print) printf("%s", line);
+    // line printing if -o opt was switched on:
+    if (dp->opt_mask[1]) {
+      for (regoff_t i = pmatch->rm_so; i < pmatch->rm_eo; i++)
+        printf("%c", line[i]);
+      printf("\n");
+    }
+  }
+}
 
 /*===================================================================================
                             Options parsing function
 ===================================================================================*/
-void opt_def(int argc, char** argv, int index, data_t* dp) {
+void opt_def(int argc, char** argv, data_t* dp) {
 #ifdef DEBUG
   printf("opt_def() was launched\n");
 #endif  // DEBUG
-
-  int i = 1;
-  while (argv[index][i] && !dp->templs[index] && !dp->t_files[index] &&
-         !dp->errcode) {
-    // input symbol position in shopts:
-    char* opt_pos = e_strchr(dp->shopts, argv[index][i]);
-    if (opt_pos == NULL) {
-      dp->errcode = 3;
-      dp->error_ch = argv[index][i];
-    } else {
-      dp->opt_mask[opt_pos - dp->shopts] = 1;
-      if (*opt_pos == 'e') opt_e(argc, argv, dp, index, i);
-      if (*opt_pos == 'f') opt_f(argc, argv, dp, index, i);
+  for (int i = 1; i < argc && !dp->errcode; i++)
+    if (argv[i][0] == '-' && argv[i][1]) {
+      int j = 1;
+      while (argv[i][j] && !dp->templs[i] && !dp->t_files[i] && !dp->errcode) {
+        // input symbol position in shopts:
+        char* opt_pos = e_strchr(dp->shopts, argv[i][j]);
+        if (opt_pos == NULL) {
+          dp->errcode = 3;
+          dp->error_ch = argv[i][j];
+        } else {
+          dp->opt_mask[opt_pos - dp->shopts] = 1;
+          if (*opt_pos == 'e') opt_e(argc, argv, dp, i, j);
+          if (*opt_pos == 'f') opt_f(argc, argv, dp, i, j);
+        }
+        j++;
+      }
     }
-    i++;
-  }
+  // -v => -o = 0:
+  if (dp->opt_mask[5]) dp->opt_mask[1] = 0;
+  // -c || -l => (-n && -o) = 0:
+  if (dp->opt_mask[6] || dp->opt_mask[7])
+    for (int i = 0; i < 2; i++) dp->opt_mask[i] = 0;
+
+  /*
+   *                    V V V V V V V V V V
+   *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
+   *     short options: n o h e i v c l s f
+   */
 
 #ifdef DEBUG
   printf("opt_def() has ended\n");
@@ -271,6 +323,39 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
 }
 
 /*===================================================================================
+                          Tempate and files parsing function
+===================================================================================*/
+void nonopt_def(int argc, char** argv, data_t* dp) {
+  for (int i = 1; i < argc; i++) {
+    if ((argv[i][0] != '-' || (argv[i][0] == '-' && argv[i][1] == '\0')) &&
+        !dp->t_exist) {
+      dp->templs[i] = argv[i];
+      dp->t_exist = TRUE;
+    }
+    if ((**(argv + i)) != '-' && !dp->templs[i] && !dp->t_files[i]) {
+      dp->files[i] = argv[i];
+      dp->files_num++;
+    }
+  }
+}
+
+/*===================================================================================
+                            Array squeezing to array head
+===================================================================================*/
+void array_squeezing(int argc, char** array) {
+  for (int i = 0, j = 0; i < argc && j < argc; i++, j++) {
+    while (!array[i] && i < argc - 1) i++;
+    while (array[j]) j++;
+    if (j < i) {
+      array[j] = array[i];
+      array[i] = NULL;
+    } else {
+      j = i - 1;
+    }
+  }
+}
+
+/*===================================================================================
                               Template file checking
 ===================================================================================*/
 void t_file_check(data_t* dp, int i) {
@@ -287,11 +372,11 @@ void t_file_check(data_t* dp, int i) {
                                     File closing
 ===================================================================================*/
 void file_closing(FILE* fp, data_t* dp) {
-  if (fclose(fp) && !dp->opt_mask[8]) {   // if success, fclose returns 0
+  if (fclose(fp) && !dp->opt_mask[8]) {  // if success, fclose returns 0
 #ifndef DEBUG
-    fprintf(stderr, "e_grep: %s: file processing error\n", dp->error_file);
-#else  // DEBUG
-    fprintf(stdout, "e_grep: %s: file processing error\n", dp->error_file);
+    fprintf(stderr, "e_grep: %s: File processing error\n", dp->error_file);
+#else   // DEBUG
+    fprintf(stdout, "e_grep: %s: File processing error\n", dp->error_file);
 #endif  // DEBUG
   }
 }
@@ -299,78 +384,69 @@ void file_closing(FILE* fp, data_t* dp) {
 /*===================================================================================
                       Template file reading to templates array
 ===================================================================================*/
-void t_file_read(int argc, data_t* dp, int i) {
+void t_file_read(data_t* dp) {
+  ssize_t read_bytes = 0;
+  char* line = NULL;
+  size_t line_len = 64;
+
+  for (int i = 0; dp->t_files[i]; i++) {
 #ifdef DEBUG
-  printf("\t├──t_file_read() was launched: %s\n", dp->t_files[i]);
+    printf("\t├──t_file_read() was launched with: %s\n", dp->t_files[i]);
 #endif  // DEBUG
 
-  i = del_dupl(argc, dp->t_files, i);
-  FILE* fp = NULL;
-  if (dp->t_files[i]) {
-    fp = fopen(dp->t_files[i], "r");
-    // START OF READING LINES FROM T_FILE TO TEMPLATES ARRAY:
-    ssize_t read_bytes = 0;
-    char* line = NULL;
-    size_t line_len = 64;
-
+    // without NULL-checking due to t_file_check():
+    FILE* fp = fopen(dp->t_files[i], "r");  
     while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !dp->errcode) {
-      line[read_bytes - 1] = '\0';  // character replacement: '\n' -> '\0'
+      if (line[0] != '\n')
+        line[read_bytes - 1] = '\0';  // character replacement: '\n' -> '\0'
       dp->templs_num++;
       dp->templs = (char**)realloc(dp->templs, dp->templs_num * sizeof(char*));
       if (dp->templs == NULL)
         dp->errcode = 1;  // system memory access error
       else
-        dp->templs[dp->templs_num - 1] = (char*)calloc(read_bytes, sizeof(char));
+        dp->templs[dp->templs_num - 1] =
+            (char*)calloc(read_bytes, sizeof(char));
       if (!dp->errcode && dp->templs[dp->templs_num - 1] == NULL)
         dp->errcode = 1;  // system memory access error
       else
-        e_strcpy(dp->templs[dp->templs_num - 1], line);  
+        e_strcpy(dp->templs[dp->templs_num - 1], line);
     }
     free(line);
     // END OF READING LINES
     file_closing(fp, dp);
-  }
 
 #ifdef DEBUG
-  printf("\t└──t_file_read() has ended: %s\n", dp->t_files[i]);
+    printf("\t└──t_file_read() has ended with: %s\n", dp->t_files[i]);
 #endif  // DEBUG
+  }
 }  // 27 lines
 
 /*===================================================================================
                             Duplicates deletion function
 ===================================================================================*/
-int del_dupl(int argc, char** str_array, int i) {
+void del_dupl(int argc, char** array, int i) {
 #ifdef DEBUG
-  printf("\t├──del_dupl() was launched: %s\n", str_array[i]);
+  printf("\t├──del_dupl() was launched: %s\n", array[i]);
 #endif  // DEBUG
 
   bool duplicate = FALSE;
-  // squeezing:
-  int j = 0;
-  while (str_array[j]) j++;
-  str_array[j] = str_array[i];
-  str_array[i] = NULL;
-  i = j;
-  // duplicates deletion:
-  for (int k = 0; k < i && !duplicate; k++) {
-    if (e_strcmp(str_array[k], str_array[i]) == 0) {
+  for (int j = 0; j < i && !duplicate; j++) {
+    while (!array[j] && j < i - 1) j++;
+    if (array[j] && e_strcmp(array[j], array[i]) == 0) {
       duplicate = TRUE;
       if (i >= argc)  // -> memory allocated by developer
-        free(str_array[i]);
-      str_array[i] = NULL;
+        free(array[i]);
+      array[i] = NULL;
 
 #ifdef DEBUG
-  printf("\t│   \t└──DUPLICATE DETECTED!\n");
+      printf("\t│   \t└──DUPLICATE DETECTED!\n");
 #endif  // DEBUG
-
     }
   }
 
 #ifdef DEBUG
-  printf("\t└──del_dupl() has ended: %s\n", str_array[i]);
+  printf("\t└──del_dupl() has ended: %s\n", array[i]);
 #endif  // DEBUG
-
-  return i;
 }  // 16 lines
 
 /*===================================================================================
@@ -379,42 +455,48 @@ int del_dupl(int argc, char** str_array, int i) {
 #ifndef DEBUG
 void error_print(data_t* dp) {
   if (dp->errcode == 1) {
-    fprintf(stderr, "e_grep: system memory access error\n");
+    fprintf(stderr, "e_grep: System memory access error\n");
   } else if (dp->errcode == 2) {
-    fprintf(stderr, "e_grep: too few arguments\n");
+    fprintf(stderr, "e_grep: Too few arguments\n");
   } else if (dp->errcode == 3) {
-    fprintf(stderr, "e_grep: illegal option -- %c\n", dp->error_ch);
+    fprintf(stderr, "e_grep: Illegal option -- %c\n", dp->error_ch);
     fprintf(stderr, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
   } else if (dp->errcode == 4) {
-    fprintf(stderr, "e_grep: %s: no such file or directory\n",
+    fprintf(stderr, "e_grep: %s: No such file or directory\n",
             dp->error_file);
   } else if (dp->errcode == 5) {
-    fprintf(stderr, "e_grep: option requires an argument -- %c\n",
+    fprintf(stderr, "e_grep: Option requires an argument -- %c\n",
             dp->error_ch);
     fprintf(stderr, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
   } else if (dp->errcode == 6) {
-    fprintf(stderr, "e_grep: %s: file processing error\n", dp->error_file);
+    fprintf(stderr, "e_grep: Target file is required\n");
+    fprintf(stderr, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
+  } else if (dp->errcode == 7) {
+    fprintf(stderr, "e_grep: %s: File processing error\n", dp->error_file);
   }
 }
-#else  // DEBUG
+#else   // DEBUG
 //---------------------------FOR_DEBUG_WITH_MAKEFILE_SCRIPT------------------------------
 void error_print(data_t* dp) {
   if (dp->errcode == 1) {
-    fprintf(stdout, "e_grep: system memory access error\n");
+    fprintf(stdout, "e_grep: System memory access error\n");
   } else if (dp->errcode == 2) {
-    fprintf(stdout, "e_grep: too few arguments\n\n\n");
+    fprintf(stdout, "e_grep: Too few arguments\n\n\n");
   } else if (dp->errcode == 3) {
-    fprintf(stdout, "e_grep: illegal option -- %c\n", dp->error_ch);
+    fprintf(stdout, "e_grep: Illegal option -- %c\n", dp->error_ch);
     fprintf(stdout, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
   } else if (dp->errcode == 4) {
-    fprintf(stdout, "e_grep: %s: no such file or directory\n",
+    fprintf(stdout, "e_grep: %s: No such file or directory\n",
             dp->error_file);
   } else if (dp->errcode == 5) {
-    fprintf(stdout, "e_grep: option requires an argument -- %c\n",
+    fprintf(stdout, "e_grep: Option requires an argument -- %c\n",
             dp->error_ch);
     fprintf(stdout, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
   } else if (dp->errcode == 6) {
-    fprintf(stdout, "e_grep: %s: file processing error\n", dp->error_file);
+    fprintf(stdout, "e_grep: Target file is required\n");
+    fprintf(stdout, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
+  } else if (dp->errcode == 7) {
+    fprintf(stdout, "e_grep: %s: File processing error\n", dp->error_file);
   }
 }
 #endif  // DEBUG
@@ -426,7 +508,7 @@ void error_print(data_t* dp) {
 void mem_free(int argc, data_t* dp) {
   if (dp->templs) {
     for (int i = argc; i < dp->templs_num; i++) {
-      free(dp->templs[i]);
+      if (dp->templs[i]) free(dp->templs[i]);
     }
     free(dp->templs);
   }
@@ -443,7 +525,7 @@ void opt_print(data_t* dp) {
 
 void array_print(char** array, int argc) {
   for (int i = 0; i < argc; i++)
-    if (array[i] != NULL)
+    // if (array[i] != NULL)
     printf("%s\t", array[i]);
 }
 #endif  // DEBUG

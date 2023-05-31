@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
   printf("---------------------------------------------------------------\n");
 #endif  // DEBUG
   // DATA_T DATA INITIALIZATION
-  data_t data = {0};  // data_t is type of struct variable
+  data_t data = {0};  // input data struct init
   data.shopts = "noheivclsf";
   bool array[OPTS_NUM] = {0};
   data.opt_mask = array;
