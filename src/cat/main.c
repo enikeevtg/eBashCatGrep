@@ -1,6 +1,6 @@
 /*  cat/main.c
  *  (c) T. Enikeev
- *  zeftyrst@student.21-school.ru
+ *  enikeev.tg@gmail.com
  */
 
 #include "e_cat.h"

@@ -2,7 +2,7 @@
 #  																																					#
 #    Makefile для проекта SimpleBashUtilits-1: e_grep                       #
 #    (c) T. Enikeev                                                         #
-#    zeftyrst@student.21-school.ru                                          #
+#    enikeev.tg@gmail.com                                                   #
 #				 																																	  #
 #    Для справки:																													  #
 #    $@ Имя цели обрабатываемого правила																		#
@@ -29,17 +29,23 @@ DEB = -D DEBUG
 e_grep: main.o e_grep.o lib
 	$(CC) -o $(EXE) $(OBJ) -L$(COM) -l$(LIB)
 	rm *.o
-	cp e_grep test_grep/
 
 test:
-	cp e_grep test_grep/
 	sh test_grep/test_func_grep.sh
 
 main.o:
 	$(CC) $(CF) main.c $(STD)
 
 e_grep.o:
-	$(CC) $(CF) e_grep.c $(STD)
+	$(CC) $(CF) e_grep.c $(STD) 
+# При использовании функции getline()
+# необходимо либо в опциях компилятора
+# прописывать -D_GNU_SOURCE,
+# либо в коде перед вызвом <stdio.h>
+# прописывать #define _GNU_SOURCE.
+# *В зависимсти от версии:
+# до glibc 2.10: _GNU_SOURCE
+# начиная с glibc 2.10% _POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700
 
 lib: $(COM)e_string.o
 	ar rv $(COM)libString.a $^

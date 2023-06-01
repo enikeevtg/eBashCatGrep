@@ -2,7 +2,7 @@
 #  																																					#
 #    Makefile для проекта SimpleBashUtilits-1: e_cat                        #
 #    (c) T. Enikeev                                                         #
-#    zeftyrst@student.21-school.ru                                          #
+#    enikeev.tg@gmail.com                                                   #
 #				 																																	  #
 #    Для справки:																													  #
 #    $@ Имя цели обрабатываемого правила																		#

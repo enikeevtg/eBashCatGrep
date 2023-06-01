@@ -1,6 +1,6 @@
 /*  e_cat.c
  *  (c) T. Enikeev
- *  zeftyrst@student.21-school.ru
+ *  enikeev.tg@gmail.com
  *  Коды ошибок errcode:
  *  1 - illegal option
  *  2 - no such file or directory

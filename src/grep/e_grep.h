@@ -1,6 +1,6 @@
 /*  e_grep.c
  *  (c) T. Enikeev
- *  zeftyrst@student.21-school.ru
+ *  enikeev.tg@gmail.com
  *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
  *     short options: n o h e i v c l s f
  *  Коды ошибок errcode:
@@ -16,6 +16,9 @@
 #ifndef E_GREP
 #define E_GREP
 
+// for getline() compilation (must be before <stdio.h>!):
+#define _GNU_SOURCE
+
 #include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -24,7 +27,6 @@
 #include "../common/e_string.h"
 
 #define OPTS_NUM 10  // single-character options quantity
-#define _GNU_SOURCE  // for getline() compilation
 #define TRUE 1
 #define FALSE 0
 

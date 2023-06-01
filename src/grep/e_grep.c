@@ -1,6 +1,6 @@
 /*  e_grep.c
  *  (c) T. Enikeev
- *  zeftyrst@student.21-school.ru
+ *  enikeev.tg@gmail.com
  *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
  *     short options: n o h e i v c l s f
  *  Коды ошибок errcode:
@@ -113,21 +113,20 @@ void file_proc(FILE* fp, data_t* dp, int f_index) {
   char* line = NULL;
   size_t line_len = 64;
 
-  int m_count = 0;         // matches counter
-  formats_t fms = {0};     // struct for matches search init
+  int m_count = 0;           // matches counter
+  formats_t fms = {0};       // struct for matches search init
   fms.file_index = f_index;  // file number in files array
   fms.line_index = 0;        // line number
-  fms.esc_file = FALSE;    // escape file signal
+  fms.esc_file = FALSE;      // escape file signal
   // if -o, -c or -l opts was switched on -> line not printing:
   fms.enabl_print = TRUE;
-  if (dp->opt_mask[6] || dp->opt_mask[7])
-    fms.enabl_print = FALSE;
+  if (dp->opt_mask[6] || dp->opt_mask[7]) fms.enabl_print = FALSE;
   fms.enabl_opt_o = TRUE;
 
   // for regcomp:
   fms.cflags = 0;
   // if -e opt was switched on:
-  //if (dp->opt_mask[3]) fms.cflags |= REG_EXTENDED;
+  if (dp->opt_mask[3]) fms.cflags |= REG_EXTENDED;
   // if -i opt was switched on:
   if (dp->opt_mask[4]) fms.cflags |= REG_ICASE;
 
@@ -135,7 +134,6 @@ void file_proc(FILE* fp, data_t* dp, int f_index) {
   fms.eflags = 0;
   size_t nmatch = 1;
   regmatch_t pmatch[1] = {0};
-
 
   // START OF READING LINES FROM FILE
   while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !fms.esc_file) {
@@ -145,7 +143,6 @@ void file_proc(FILE* fp, data_t* dp, int f_index) {
     if (line_proc(dp, line, pmatch, nmatch, &fms)) m_count++;
   }
   free(line);  // END OF READING LINES FROM FILE
-
 
   // if -c opt was switched on:
   if (dp->opt_mask[6]) {
@@ -178,7 +175,8 @@ bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
     while (!dp->templs[i] && i < dp->templs_num - 1) i++;
     if (dp->templs[i]) {
       // regex_t cur_templ;  // working good too
-      comp = !regcomp(&cur_templ, dp->templs[i], fmsp->cflags);  // success returns 0
+      comp = !regcomp(&cur_templ, dp->templs[i],
+                      fmsp->cflags);  // success returns 0
       if (comp)
         match_found = !regexec(&cur_templ, line, nmatch, pmatch, fmsp->eflags);
       regfree(&cur_templ);  // no leaks detected
@@ -193,7 +191,6 @@ bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
     line_proc(dp, line + pmatch->rm_eo, pmatch, nmatch, fmsp);  // recursion
     fmsp->enabl_opt_o = TRUE;
   }
-
 
 #ifdef DEBUG
   printf("\t└──line_proc() has ended\n");
@@ -218,7 +215,8 @@ void line_print(data_t* dp, char* line, regmatch_t* pmatch, bool* match,
     // if -l opt was switched on:
     if (dp->opt_mask[7]) fmsp->esc_file = TRUE;
     // if -h opt wasn't switched on:
-    if (!dp->opt_mask[2] && dp->files_num > 1 && fmsp->enabl_opt_o && fmsp->enabl_print)
+    if (!dp->opt_mask[2] && dp->files_num > 1 && fmsp->enabl_opt_o &&
+        fmsp->enabl_print)
       printf("%s:", dp->files[fmsp->file_index]);
     // if -n opt was switched on:
     if (dp->opt_mask[0] && fmsp->enabl_opt_o) printf("%d:", fmsp->line_index);
@@ -263,11 +261,11 @@ void opt_def(int argc, char** argv, data_t* dp) {
   if (dp->opt_mask[6] || dp->opt_mask[7])
     for (int i = 0; i < 2; i++) dp->opt_mask[i] = 0;
 
-  /*
-   *                    V V V V V V V V V V
-   *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
-   *     short options: n o h e i v c l s f
-   */
+      /*
+       *                    V V V V V V V V V V
+       *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
+       *     short options: n o h e i v c l s f
+       */
 
 #ifdef DEBUG
   printf("opt_def() has ended\n");
@@ -395,7 +393,7 @@ void t_file_read(data_t* dp) {
 #endif  // DEBUG
 
     // without NULL-checking due to t_file_check():
-    FILE* fp = fopen(dp->t_files[i], "r");  
+    FILE* fp = fopen(dp->t_files[i], "r");
     while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !dp->errcode) {
       if (line[0] != '\n')
         line[read_bytes - 1] = '\0';  // character replacement: '\n' -> '\0'

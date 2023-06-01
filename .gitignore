@@ -8,6 +8,9 @@
 e_cat
 e_grep
 
+# Scripts
+*.sh
+
 # Prerequisites
 *.d
 
