@@ -45,6 +45,9 @@ $(COM)e_string.o:
 test:
 	sh test_cat/test_func_cat.sh
 
+leak:
+	sh test_cat/test_func_cat.sh
+
 clean:
 	rm -rf $(EXE) $(OBJ) $(COM)libString.a
 

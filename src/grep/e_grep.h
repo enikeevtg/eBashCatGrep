@@ -1,9 +1,9 @@
-/*  e_grep.c
+/*  e_grep.h
  *  (c) T. Enikeev
  *  enikeev.tg@gmail.com
  *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
  *     short options: n o h e i v c l s f
- *  Коды ошибок errcode:
+ *  Error codes:
  *  1 - system memory access error
  *  2 - too few arguments
  *  3 - illegal option
@@ -55,6 +55,8 @@ typedef struct {
 } formats_t;         // FOR MATCH SEARCHING TYPE
 
 //---FUNCTIONS_DECLARATIONS---------------------------------------------------------
+void data_init(int argc, data_t* dp);
+
 void e_grep(int argc, char** argv, data_t* dp);
 
 void opt_def(int argc, char** argv, data_t* dp);
@@ -63,25 +65,21 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i);
 
 void nonopt_def(int argc, char** argv, data_t* dp);
 void array_squeezing(int argc, char** array);
+void del_dupl(int argc, char** array, int i);
 
 void t_file_check(data_t* dp, int i);
-void file_closing(FILE* fp, data_t* dp);
 void t_file_read(data_t* dp);
+void file_closing(FILE* fp, data_t* dp);
 
-void del_dupl(int argc, char** array, int i);
+void formats_init(formats_t* fmsp, data_t* dp, int f_index);
 void file_proc(FILE* fp, data_t* dp, int f_index);
 bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
                formats_t* fmsp);
 void line_print(data_t* dp, char* line, regmatch_t* pm, bool* match,
                 formats_t* fmsp);
-// void print_match(int argc, data_t* dp);
+
 void error_print(data_t* dp);
 void mem_free(int argc, data_t* dp);
-
-#ifdef DEBUG
-void opt_print(data_t* dp);
-void array_print(char** array, int argc);
-#endif  // DEBUG
 //----------------------------------------------------------------------------------
 
 #endif  // E_GREP
