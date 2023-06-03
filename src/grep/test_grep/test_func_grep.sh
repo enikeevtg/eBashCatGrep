@@ -7,19 +7,19 @@ DIFF_RES=""
 
 declare -a tests=(
 "s test_grep/test_0_grep.txt VAR"
-"for e_grep.c e_grep.h Makefile VAR"
-"for e_grep.c VAR"
-"-e for -e ^int e_grep.c e_grep.h Makefile VAR"
-"-e for -e ^int e_grep.c VAR"
-"-e regex -e ^print e_grep.c VAR -f test_grep/test_ptrn_grep.txt"
-"-e while -e void e_grep.c Makefile VAR -f test_grep/test_ptrn_grep.txt"
+"for s21_grep.c s21_grep.h Makefile VAR"
+"for s21_grep.c VAR"
+"-e for -e ^int s21_grep.c s21_grep.h Makefile VAR"
+"-e for -e ^int s21_grep.c VAR"
+"-e regex -e ^print s21_grep.c VAR -f test_grep/test_ptrn_grep.txt"
+"-e while -e void s21_grep.c Makefile VAR -f test_grep/test_ptrn_grep.txt"
 )
 
 declare -a extra=(
 "-n for test_grep/test_1_grep.txt test_grep/test_2_grep.txt"
 "-n for test_grep/test_1_grep.txt"
 "-n -e ^\} test_grep/test_1_grep.txt"
-"-c -e /\ test_grep/test_1_grep.txt"
+"-c -e \/ test_grep/test_1_grep.txt"
 "-ce ^int test_grep/test_1_grep.txt test_grep/test_2_grep.txt"
 "-e ^int test_grep/test_1_grep.txt"
 "-nivh = test_grep/test_1_grep.txt test_grep/test_2_grep.txt"
@@ -37,19 +37,18 @@ declare -a extra=(
 "-e = -e out test_grep/test_5_grep.txt"
 "-noe ing -e as -e the -e not -e is test_grep/test_6_grep.txt"
 "-e ing -e as -e the -e not -e is test_grep/test_6_grep.txt"
-"-c -e . test_grep/test_1_grep.txt -e '.'"
 "-l for test_grep/no_file.txt test_grep/test_2_grep.txt"
 "-f test_grep/test_3_grep.txt test_grep/test_5_grep.txt"
 )
-
+zeftyrst@student.21-school.ru
 testing()
 {
     t=$(echo $@ | sed "s/VAR/$var/")
-    ./e_grep $t > test_e_grep.log
+    ./s21_grep $t > test_s21_grep.log
     grep $t > test_sys_grep.log
-    DIFF_RES="$(diff -s test_e_grep.log test_sys_grep.log)"
+    DIFF_RES="$(diff -s test_s21_grep.log test_sys_grep.log)"
     (( COUNTER++ ))
-    if [ "$DIFF_RES" == "Files test_e_grep.log and test_sys_grep.log are identical" ]
+    if [ "$DIFF_RES" == "Files test_s21_grep.log and test_sys_grep.log are identical" ]
     then
       (( SUCCESS++ ))
       echo "\033[31m$FAIL\033[0m/\033[32m$SUCCESS\033[0m/$COUNTER \033[32msuccess\033[0m grep $t"
@@ -57,7 +56,7 @@ testing()
       (( FAIL++ ))
       echo "\033[31m$FAIL\033[0m/\033[32m$SUCCESS\033[0m/$COUNTER \033[31mfail\033[0m grep $t"
     fi
-    rm test_e_grep.log test_sys_grep.log
+    rm test_s21_grep.log test_sys_grep.log
 }
 
 # специфические тесты

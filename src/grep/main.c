@@ -1,4 +1,5 @@
-/*  grep/main.c
+/*
+ *  src/grep/main.c
  *  (c) T. Enikeev
  *  enikeev.tg@gmail.com
  *  enikeev.tg@gmail.com

@@ -1,5 +1,7 @@
-/*  e_grep.c
+/*
+ *  src/grep/e_grep.c
  *  (c) T. Enikeev
+ *  enikeev.tg@gmail.com
  *  enikeev.tg@gmail.com
  *  opt_mask indices: 0 1 2 3 4 5 6 7 8 9
  *     short options: n o h e i v c l s f
@@ -15,9 +17,9 @@
 
 #include "e_grep.h"
 
-/*===================================================================================
-                            Input data initialization
-===================================================================================*/
+/*==============================================================================
+                          Input data initialization
+==============================================================================*/
 void data_init(int argc, data_t* dp) {
   dp->shopts = "noheivclsf";
   dp->opt_mask = (bool*)calloc(OPTS_NUM, sizeof(bool));
@@ -30,9 +32,9 @@ void data_init(int argc, data_t* dp) {
   dp->error_ch = '\0';
 }
 
-/*===================================================================================
-                                    e_grep
-===================================================================================*/
+/*==============================================================================
+                                e_grep
+==============================================================================*/
 void e_grep(int argc, char** argv, data_t* dp) {
   // IDENTIFICATION OPT_MASK AND TEMPS after -e opt or T_FILES after -f opt:
   opt_def(argc, argv, dp);
@@ -73,9 +75,9 @@ void e_grep(int argc, char** argv, data_t* dp) {
   }
 }
 
-/*===================================================================================
+/*==============================================================================
                             Options parsing function
-===================================================================================*/
+==============================================================================*/
 void opt_def(int argc, char** argv, data_t* dp) {
   for (int i = 1; i < argc && !dp->errcode; i++)
     if (argv[i][0] == '-' && argv[i][1]) {
@@ -105,9 +107,9 @@ void opt_def(int argc, char** argv, data_t* dp) {
     for (int i = 0; i < 2; i++) dp->opt_mask[i] = 0;
 }
 
-/*===================================================================================
-                                Option -e processing
-===================================================================================*/
+/*==============================================================================
+                              Option -e processing
+==============================================================================*/
 void opt_e(int argc, char** argv, data_t* dp, int index, int i) {
   dp->t_exist = TRUE;
   if (argv[index][i + 1] != '\0') {
@@ -120,9 +122,9 @@ void opt_e(int argc, char** argv, data_t* dp, int index, int i) {
   }
 }
 
-/*===================================================================================
-                                Option -f processing
-===================================================================================*/
+/*==============================================================================
+                              Option -f processing
+==============================================================================*/
 void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
   dp->t_exist = TRUE;
   if (index == argc - 1) {
@@ -137,9 +139,9 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
   }
 }
 
-/*===================================================================================
-                          Tempate and files parsing function
-===================================================================================*/
+/*==============================================================================
+                        Tempate and files parsing function
+==============================================================================*/
 void nonopt_def(int argc, char** argv, data_t* dp) {
   for (int i = 1; i < argc; i++) {
     if ((argv[i][0] != '-' || (argv[i][0] == '-' && argv[i][1] == '\0')) &&
@@ -154,9 +156,9 @@ void nonopt_def(int argc, char** argv, data_t* dp) {
   }
 }
 
-/*===================================================================================
-                            Array squeezing to array head
-===================================================================================*/
+/*==============================================================================
+                          Array squeezing to array head
+==============================================================================*/
 void array_squeezing(int argc, char** array) {
   for (int i = 0, j = 0; i < argc && j < argc; i++, j++) {
     while (!array[i] && i < argc - 1) i++;
@@ -170,9 +172,9 @@ void array_squeezing(int argc, char** array) {
   }
 }
 
-/*===================================================================================
-                            Duplicates deletion function
-===================================================================================*/
+/*==============================================================================
+                          Duplicates deletion function
+==============================================================================*/
 void del_dupl(int argc, char** array, int i) {
   bool duplicate = FALSE;
   for (int j = 0; j < i && !duplicate; j++) {
@@ -186,9 +188,9 @@ void del_dupl(int argc, char** array, int i) {
   }
 }
 
-/*===================================================================================
-                              Template file checking
-===================================================================================*/
+/*==============================================================================
+                            Template file checking
+==============================================================================*/
 void t_file_check(data_t* dp, int i) {
   FILE* fp = fopen(dp->t_files[i], "r");
   if (!fp) {
@@ -199,9 +201,9 @@ void t_file_check(data_t* dp, int i) {
   }
 }
 
-/*===================================================================================
-                      Template file reading to templates array
-===================================================================================*/
+/*==============================================================================
+                    Template file reading to templates array
+==============================================================================*/
 void t_file_read(data_t* dp) {
   ssize_t read_bytes = 0;
   char* line = NULL;
@@ -225,7 +227,7 @@ void t_file_read(data_t* dp) {
       if (!dp->errcode && dp->templs[dp->templs_num - 1] == NULL)
         dp->errcode = 1;  // system memory access error
       else
-        e_strcpy(dp->templs[dp->templs_num - 1], line);
+        e_strcpy(dp->templs[dp->templs_num - 1], line);  // insecure cause void!
     }
     free(line);
     // END OF READING LINES
@@ -233,17 +235,17 @@ void t_file_read(data_t* dp) {
   }
 }
 
-/*===================================================================================
-                                    File closing
-===================================================================================*/
+/*==============================================================================
+                                  File closing
+==============================================================================*/
 void file_closing(FILE* fp, data_t* dp) {
   if (fclose(fp) && !dp->opt_mask[8])  // if success, fclose returns 0
     fprintf(stderr, "e_grep: %s: File processing error\n", dp->error_file);
 }
 
-/*===================================================================================
-                      For matches search data initialization
-===================================================================================*/
+/*==============================================================================
+                    For matches search data initialization
+==============================================================================*/
 void formats_init(formats_t* fmsp, data_t* dp, int f_index) {
   fmsp->file_index = f_index;  // file number in files array
   fmsp->line_index = 0;        // line number
@@ -260,9 +262,9 @@ void formats_init(formats_t* fmsp, data_t* dp, int f_index) {
   fmsp->eflags = 0;  // for regexec function
 }
 
-/*===================================================================================
-                                  Match searching
-===================================================================================*/
+/*==============================================================================
+                                Match searching
+==============================================================================*/
 void file_proc(FILE* fp, data_t* dp, int f_index) {
   // for reading file lines by getline():
   ssize_t read_bytes = 0;
@@ -296,9 +298,9 @@ void file_proc(FILE* fp, data_t* dp, int f_index) {
   if (dp->opt_mask[7] && fms.esc_file) printf("%s\n", dp->files[f_index]);
 }
 
-/*===================================================================================
-                            Line matching analysis
-===================================================================================*/
+/*==============================================================================
+                          Line matching analysis
+==============================================================================*/
 bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
                formats_t* fmsp) {
   // LINE ANALYSIS:
@@ -327,12 +329,12 @@ bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
   return match_found;
 }
 
-/*===================================================================================
-                            Line matching analysis.
-                          wrote: V V V V V V V V V V
-               opt_mask indices: 0 1 2 3 4 5 6 7 8 9
+/*==============================================================================
+                            Line matching analysis
+                         written: V V V V V V V V V V
+                opt_mask indices: 0 1 2 3 4 5 6 7 8 9
                   short options: n o h e i v c l s f
-===================================================================================*/
+==============================================================================*/
 void line_print(data_t* dp, char* line, regmatch_t* pmatch, bool* match,
                 formats_t* fmsp) {
   // if -v opt was switched on:
@@ -357,9 +359,9 @@ void line_print(data_t* dp, char* line, regmatch_t* pmatch, bool* match,
   }
 }
 
-/*===================================================================================
-                              Error processing
-===================================================================================*/
+/*==============================================================================
+                                Error processing
+==============================================================================*/
 void error_print(data_t* dp) {
   if (dp->errcode == 1) {
     fprintf(stderr, "e_grep: System memory access error\n");
@@ -369,8 +371,7 @@ void error_print(data_t* dp) {
     fprintf(stderr, "e_grep: Illegal option -- %c\n", dp->error_ch);
     fprintf(stderr, "usage: e_grep [-%s] [pattern] [file ...]\n", dp->shopts);
   } else if (dp->errcode == 4) {
-    fprintf(stderr, "e_grep: %s: No such file or directory\n",
-            dp->error_file);
+    fprintf(stderr, "e_grep: %s: No such file or directory\n", dp->error_file);
   } else if (dp->errcode == 5) {
     fprintf(stderr, "e_grep: Option requires an argument -- %c\n",
             dp->error_ch);
@@ -383,10 +384,10 @@ void error_print(data_t* dp) {
   }
 }
 
-/*===================================================================================
-                                  Freeing memory:
+/*==============================================================================
+                                Freeing memory:
                     Maybe null-pointer checking not required
-===================================================================================*/
+==============================================================================*/
 void mem_free(int argc, data_t* dp) {
   free(dp->opt_mask);
   if (dp->templs) {
