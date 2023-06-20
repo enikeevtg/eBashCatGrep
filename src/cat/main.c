@@ -19,6 +19,6 @@ int main(int argc, char** argv) {
     error_print(&data);
   // ОСВОБОЖДЕНИЕ ПАМЯТИ
   if (data.lopts) free(data.lopts);
-  if (data.opt_mask) free(data.opt_mask);
+  if (data.option) free(data.option);
   return data.errcode;
 }

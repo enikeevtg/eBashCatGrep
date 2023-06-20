@@ -31,7 +31,7 @@ void data_init(data_t* dp) {
     dp->errcode = 3;
   }
   dp->lopts_num = LOPTS_NUM;
-  dp->opt_mask = (bool*)calloc(SHOPTS_NUM, sizeof(bool));
+  dp->option = (bool*)calloc(SHOPTS_NUM, sizeof(bool));
   dp->errcode = 0;
   dp->error_ch = '\0';
   dp->nonopt_index = 0;
@@ -98,7 +98,7 @@ void shopt_ident(char* argvi, data_t* dp) {
       dp->errcode = 1;
       dp->error_ch = argvi[i];
     } else
-      dp->opt_mask[opt_pos - dp->shopts] = 1;
+      dp->option[opt_pos - dp->shopts] = 1;
   }
 }
 
@@ -109,7 +109,7 @@ void lopt_ident(char* argvi, data_t* dp) {
   int match = dp->lopts_num;  // Счётчик совпадений
   for (int i = 0; i < dp->lopts_num; i++) {
     if (e_strcmp(argvi, dp->lopts[i]) == 0)
-      dp->opt_mask[i] = 1;
+      dp->option[i] = 1;
     else
       match--;
   }
@@ -146,18 +146,18 @@ void print_ch(FILE* fp, data_t* dp) {
 bool symb_analysis(data_t* dp, char symb, char prev_symb, char prev_prev_symb,
                    int* line_counter) {
   bool enabl_print = TRUE;
-  // -b || --number-nonblank:
-  if (dp->opt_mask[0] && symb != '\n' && prev_symb == '\n')
+
+  if (dp->option[b] && symb != '\n' && prev_symb == '\n')
     printf("%6d\t", ++(*line_counter));  // сначала ++, затем -> stdin
-  // -s || --squeeze_blank:
-  if (dp->opt_mask[1] && symb == '\n' && prev_symb == '\n' &&
+
+  if (dp->option[s] && symb == '\n' && prev_symb == '\n' &&
       prev_prev_symb == '\n')
     enabl_print = FALSE;
-  // -n || --number, но нет (-b || --number-nonblank):
-  if (dp->opt_mask[2] && !dp->opt_mask[0] && prev_symb == '\n' && enabl_print)
+
+  if (dp->option[n] && !dp->option[b] && prev_symb == '\n' && enabl_print)
     printf("%6d\t", ++(*line_counter));  // сначала ++, затем -> stdin
-  // Непечатаемые символы в -e и -t (флаг -v):
-  if (dp->opt_mask[3] || dp->opt_mask[5] || dp->opt_mask[7]) {
+
+  if (dp->option[e] || dp->option[t] || dp->option[v]) {
     if ((symb >= 0 && symb <= 8) || (symb >= 11 && symb <= 31)) {
       printf("^%c", symb + 64);
       enabl_print = FALSE;
@@ -167,11 +167,11 @@ bool symb_analysis(data_t* dp, char symb, char prev_symb, char prev_prev_symb,
       enabl_print = FALSE;
     }
   }
-  // -e || -E:
-  if ((dp->opt_mask[3] || dp->opt_mask[4]) && symb == '\n' && enabl_print)
+
+  if ((dp->option[e] || dp->option[E]) && symb == '\n' && enabl_print)
     printf("$");
-  // -t || -T:
-  if ((dp->opt_mask[5] || dp->opt_mask[6]) && symb == '\t') {
+
+  if ((dp->option[t] || dp->option[T]) && symb == '\t') {
     printf("^I");
     enabl_print = FALSE;
   }

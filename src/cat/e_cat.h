@@ -31,19 +31,19 @@
 #define FALSE 0
 
 //---СТРУКТУРЫ------------------------------------------------------------------
-// typedef enum {
-//    b, s, n, e, E, t, T, v
-// }
 
+// КОНТЕЙНЕР ДАННЫХ
 typedef struct {
   char* shopts;  // Массив односимвольных флагов (short options)
   char** lopts;  // Массив многосимвольных флагов (long options)
   int lopts_num;
-  bool* opt_mask;  // Массив индикации введённых флагов
+  bool* option;  // Массив индикации введённых флагов
   int nonopt_index;  // Номер первого элемента не флага в argv
   int errcode;    // Код ошибки
   char error_ch;  // Символ ошибочного флага
 } data_t;
+
+enum opts { b, s, n, e, E, t, T, v };  // for option[] indices
 
 //---ОБЪЯВЛЕНИЯ_ФУНКЦИЙ---------------------------------------------------------
 void data_init(data_t* dp);

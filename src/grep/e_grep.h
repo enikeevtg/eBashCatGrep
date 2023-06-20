@@ -32,12 +32,11 @@
 #define FALSE 0
 
 //---STRUCTURES-----------------------------------------------------------------
-// typedef enum {
-// }
 
+// DATA CONTAINER
 typedef struct {
   char* shopts;      // short options string
-  bool* opt_mask;    // short options mask array
+  bool* option;      // short options mask array
   bool t_exist;      // Template input existing flag
   char** templs;     // pointers to argv contains templates
   int templs_num;    // quantity of templates
@@ -49,6 +48,9 @@ typedef struct {
   char* error_file;  // error file name
 } data_t;            // INPUT DATA TYPE FOR ANALYSIS
 
+enum { n, o, h, e, i, v, c, l, s, f };  // for option[] indices
+
+// REGEX CONTAINER
 typedef struct {
   int file_index;    // file number in files array
   int line_index;    // line number

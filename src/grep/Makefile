@@ -48,6 +48,9 @@ valgrind:
 style:
 	clang-format -style=google -n *.h *.c $(COM)*.h $(COM)*.c
 
+tostyle:
+	clang-format -style=google -i *.h *.c $(COM)*.h $(COM)*.c
+
 clean:
 	$(RM) $(OBJ)
 	$(RM) $(EXE)

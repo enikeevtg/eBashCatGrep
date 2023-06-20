@@ -8,12 +8,12 @@ DIFF_RES=""
 
 declare -a tests=(
 "s test_grep/test_text_grep.txt VAR"
-"for s21_grep.c s21_grep.h Makefile VAR"
-"for s21_grep.c VAR"
-"-e for -e ^int s21_grep.c s21_grep.h Makefile VAR"
-"-e for -e ^int s21_grep.c VAR"
-"-e regex -e ^print s21_grep.c VAR -f test_grep/test_ptrn_grep.txt"
-"-e while -e void s21_grep.c Makefile VAR -f test_grep/test_ptrn_grep.txt"
+"for e_grep.c e_grep.h Makefile VAR"
+"for e_grep.c VAR"
+"-e for -e ^int e_grep.c e_grep.h Makefile VAR"
+"-e for -e ^int e_grep.c VAR"
+"-e regex -e ^print e_grep.c VAR -f test_grep/test_ptrn_grep.txt"
+"-e while -e void e_grep.c Makefile VAR -f test_grep/test_ptrn_grep.txt"
 "VAR test_grep/no_file.txt"
 )
 
@@ -47,7 +47,7 @@ declare -a extra=(
 testing()
 {
     t=$(echo $@ | sed "s/VAR/$var/")
-        CK_FORK=no valgrind --vgdb=no --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=RESULT_VALGRIND.txt ./s21_grep $t > test_s21_grep.log
+        CK_FORK=no valgrind --vgdb=no --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=RESULT_VALGRIND.txt ./e_grep $t > test_e_grep.log
         leak=$(grep ERROR RESULT_VALGRIND.txt)
         (( COUNTER++ ))
         if [[ $leak == *"ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)"* ]]
@@ -59,7 +59,7 @@ testing()
         echo "$FAIL/$SUCCESS/$COUNTER fail grep $t"
 #        echo "$leak"
     fi
-    rm test_s21_grep.log
+    rm test_e_grep.log
     rm RESULT_VALGRIND.txt
 }
 
