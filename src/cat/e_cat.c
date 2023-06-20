@@ -147,17 +147,17 @@ bool symb_analysis(data_t* dp, char symb, char prev_symb, char prev_prev_symb,
                    int* line_counter) {
   bool enabl_print = TRUE;
 
-  if (dp->option[b] && symb != '\n' && prev_symb == '\n')
+  if (dp->option[_b] && symb != '\n' && prev_symb == '\n')
     printf("%6d\t", ++(*line_counter));  // сначала ++, затем -> stdin
 
-  if (dp->option[s] && symb == '\n' && prev_symb == '\n' &&
+  if (dp->option[_s] && symb == '\n' && prev_symb == '\n' &&
       prev_prev_symb == '\n')
     enabl_print = FALSE;
 
-  if (dp->option[n] && !dp->option[b] && prev_symb == '\n' && enabl_print)
+  if (dp->option[_n] && !dp->option[_b] && prev_symb == '\n' && enabl_print)
     printf("%6d\t", ++(*line_counter));  // сначала ++, затем -> stdin
 
-  if (dp->option[e] || dp->option[t] || dp->option[v]) {
+  if (dp->option[_e] || dp->option[_t] || dp->option[_v]) {
     if ((symb >= 0 && symb <= 8) || (symb >= 11 && symb <= 31)) {
       printf("^%c", symb + 64);
       enabl_print = FALSE;
@@ -168,10 +168,10 @@ bool symb_analysis(data_t* dp, char symb, char prev_symb, char prev_prev_symb,
     }
   }
 
-  if ((dp->option[e] || dp->option[E]) && symb == '\n' && enabl_print)
+  if ((dp->option[_e] || dp->option[_E]) && symb == '\n' && enabl_print)
     printf("$");
 
-  if ((dp->option[t] || dp->option[T]) && symb == '\t') {
+  if ((dp->option[_t] || dp->option[_T]) && symb == '\t') {
     printf("^I");
     enabl_print = FALSE;
   }

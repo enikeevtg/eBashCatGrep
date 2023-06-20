@@ -48,7 +48,7 @@ typedef struct {
   char* error_file;  // error file name
 } data_t;            // INPUT DATA TYPE FOR ANALYSIS
 
-enum { n, o, h, e, i, v, c, l, s, f };  // for option[] indices
+enum { _n, _o, _h, _e, _i, _v, _c, _l, _s, _f };  // for option[] indices
 
 // REGEX CONTAINER
 typedef struct {

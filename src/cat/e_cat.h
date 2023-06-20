@@ -43,7 +43,7 @@ typedef struct {
   char error_ch;  // Символ ошибочного флага
 } data_t;
 
-enum opts { b, s, n, e, E, t, T, v };  // for option[] indices
+enum opts { _b, _s, _n, _e, _E, _t, _T, _v };  // for option[] indices
 
 //---ОБЪЯВЛЕНИЯ_ФУНКЦИЙ---------------------------------------------------------
 void data_init(data_t* dp);

@@ -68,7 +68,7 @@ void e_grep(int argc, char** argv, data_t* dp) {
     fp = fopen(dp->files[f_index], "r");
     if (fp)
       file_proc(fp, dp, f_index);
-    else if (!dp->option[s])  // -s opt wasn't switched on
+    else if (!dp->option[_s])
       fprintf(stderr, "e_grep: %s: No such file or directory\n",
               dp->files[f_index]);
     if (fp) file_closing(fp, dp);
@@ -80,7 +80,7 @@ void e_grep(int argc, char** argv, data_t* dp) {
 ==============================================================================*/
 void opt_def(int argc, char** argv, data_t* dp) {
   for (int i = 1; i < argc && !dp->errcode; i++)
-    if (argv[i][n] == '-' && argv[i][o]) {
+    if (argv[i][0] == '-' && argv[i][1]) {
       // int j = 1;
       // while (argv[i][j] && !dp->templs[i] && !dp->t_files[i] && !dp->errcode)
       // {
@@ -100,11 +100,13 @@ void opt_def(int argc, char** argv, data_t* dp) {
         // j++;
       }
     }
-  // -v => -o = 0:
-  if (dp->option[v]) dp->option[o] = 0;
-  // -c || -l => (-n && -o) = 0:
-  if (dp->option[c] || dp->option[l])
-    for (int i = 0; i < 2; i++) dp->option[i] = 0;
+
+  if (dp->option[_v]) dp->option[_o] = 0;
+
+  if (dp->option[_c] || dp->option[_l]) {
+    dp->option[_n] = 0;
+    dp->option[_o] = 0;
+  }
 }
 
 /*==============================================================================
@@ -144,7 +146,7 @@ void opt_f(int argc, char** argv, data_t* dp, int index, int i) {
 ==============================================================================*/
 void nonopt_def(int argc, char** argv, data_t* dp) {
   for (int i = 1; i < argc; i++) {
-    if ((argv[i][n] != '-' || (argv[i][n] == '-' && argv[i][o] == '\0')) &&
+    if ((argv[i][0] != '-' || (argv[i][0] == '-' && argv[i][1] == '\0')) &&
         !dp->t_exist) {
       dp->templs[i] = argv[i];
       dp->t_exist = TRUE;
@@ -213,7 +215,7 @@ void t_file_read(data_t* dp) {
     // without NULL-checking due to t_file_check() done:
     FILE* fp = fopen(dp->t_files[i], "r");
     while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !dp->errcode) {
-      if (line[n] != '\n')
+      if (line[0] != '\n')
         line[read_bytes - 1] = '\0';  // character replacement: '\n' -> '\0'
       else
         read_bytes = 2;
@@ -239,7 +241,7 @@ void t_file_read(data_t* dp) {
                                   File closing
 ==============================================================================*/
 void file_closing(FILE* fp, data_t* dp) {
-  if (fclose(fp) && !dp->option[s])  // if success, fclose returns 0
+  if (fclose(fp) && !dp->option[_s])  // if success, fclose returns 0
     fprintf(stderr, "e_grep: %s: File processing error\n", dp->error_file);
 }
 
@@ -251,14 +253,11 @@ void formats_init(formats_t* fmsp, data_t* dp, int f_index) {
   fmsp->line_index = 0;        // line number
   fmsp->esc_file = FALSE;      // escape file signal
   fmsp->enabl_print = TRUE;
-  // if -o, -c or -l opts was switched on -> line not printing:
-  if (dp->option[c] || dp->option[l]) fmsp->enabl_print = FALSE;
+  if (dp->option[_c] || dp->option[_l]) fmsp->enabl_print = FALSE;
   fmsp->enabl_opt_o = TRUE;
   fmsp->cflags = 0;  // for regcomp function
-  // if -e opt was switched on:
-  if (dp->option[e]) fmsp->cflags |= REG_EXTENDED;
-  // if -i opt was switched on:
-  if (dp->option[i]) fmsp->cflags |= REG_ICASE;
+  if (dp->option[_e]) fmsp->cflags |= REG_EXTENDED;
+  if (dp->option[_i]) fmsp->cflags |= REG_ICASE;
   fmsp->eflags = 0;  // for regexec function
 }
 
@@ -277,25 +276,25 @@ void file_proc(FILE* fp, data_t* dp, int f_index) {
 
   // for regexec:
   size_t nmatch = 1;
-  regmatch_t pmatch[o] = {0};
+  regmatch_t pmatch[1] = {0};
 
   // START OF READING LINES FROM THE FILE
   while ((read_bytes = getline(&line, &line_len, fp)) != -1 && !fms.esc_file) {
     fms.line_index++;
     // if -n opt was switched on:
-    if (dp->option[n]) fms.enabl_opt_o = TRUE;
+    if (dp->option[_n]) fms.enabl_opt_o = TRUE;
     if (line_proc(dp, line, pmatch, nmatch, &fms)) m_count++;
   }
   free(line);  // END OF READING LINES FROM THE FILE
 
   // if -c opt was switched on:
-  if (dp->option[c]) {
-    if (!dp->option[h] && dp->files_num > 1)
+  if (dp->option[_c]) {
+    if (!dp->option[_h] && dp->files_num > 1)
       printf("%s:", dp->files[fms.file_index]);
     printf("%d\n", m_count);
   }
   // if -l opt was switched on:
-  if (dp->option[l] && fms.esc_file) printf("%s\n", dp->files[f_index]);
+  if (dp->option[_l] && fms.esc_file) printf("%s\n", dp->files[f_index]);
 }
 
 /*==============================================================================
@@ -321,7 +320,7 @@ bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
   line_print(dp, line, pmatch, &match_found, fmsp);
 
   // if -o opt was switched on
-  if (match_found && dp->option[o] && line[pmatch->rm_eo] != '\0') {
+  if (match_found && dp->option[_o] && line[pmatch->rm_eo] != '\0') {
     fmsp->enabl_opt_o = FALSE;
     line_proc(dp, line + pmatch->rm_eo, pmatch, nmatch, fmsp);  // recursion
     fmsp->enabl_opt_o = TRUE;
@@ -338,20 +337,20 @@ bool line_proc(data_t* dp, char* line, regmatch_t* pmatch, size_t nmatch,
 void line_print(data_t* dp, char* line, regmatch_t* pmatch, bool* match,
                 formats_t* fmsp) {
   // if -v opt was switched on:
-  if (dp->option[v]) *match = !*match;
+  if (dp->option[_v]) *match = !*match;
   if (*match) {
     // if -l opt was switched on:
-    if (dp->option[l]) fmsp->esc_file = TRUE;
+    if (dp->option[_l]) fmsp->esc_file = TRUE;
     // if -h opt wasn't switched on:
-    if (!dp->option[h] && dp->files_num > 1 && fmsp->enabl_opt_o &&
+    if (!dp->option[_h] && dp->files_num > 1 && fmsp->enabl_opt_o &&
         fmsp->enabl_print)
       printf("%s:", dp->files[fmsp->file_index]);
     // if -n opt was switched on:
-    if (dp->option[n] && fmsp->enabl_opt_o) printf("%d:", fmsp->line_index);
+    if (dp->option[_n] && fmsp->enabl_opt_o) printf("%d:", fmsp->line_index);
     // line printing if -o opt wasn't switched on:
-    if (!dp->option[o] && fmsp->enabl_print) printf("%s", line);
+    if (!dp->option[_o] && fmsp->enabl_print) printf("%s", line);
     // line printing if -o opt was switched on:
-    if (dp->option[o]) {
+    if (dp->option[_o]) {
       for (regoff_t i = pmatch->rm_so; i < pmatch->rm_eo; i++)
         printf("%c", line[i]);
       printf("\n");
