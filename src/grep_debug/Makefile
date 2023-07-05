@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                           #
-#    src/grep/Makefile для проекта SimpleBashUtilits-1: s21_grep            #
+#    src/grep/Makefile для проекта SimpleBashUtilits-1: e_grep            #
 #    (c) T. Enikeev                                                         #
 #    enikeev.tg@gmail.com                                                   #
 #                                                                           #
@@ -24,29 +24,29 @@ STD = -std=c11 -pedantic
 DEB = -D DEBUG
 
 COM = ../common/
-SRC = main.c s21_grep.c
-OBJ = main.o s21_grep.o
-LIB = s21_string.a
-EXE = s21_grep
+SRC = main.c e_grep.c
+OBJ = main.o e_grep.o
+LIB = e_string.a
+EXE = e_grep
 
 
-s21_grep: $(OBJ) $(LIB)
+e_grep: $(OBJ) $(LIB)
 	$(CC) $(OBJ) -o $(EXE) -L$(COM) $(COM)$(LIB)
 	$(RM) *.o
 
 main.o:
 	$(CC) $(CF) $(DEB) main.c $(STD)
 
-s21_grep.o:
-	$(CC) $(CF) $(DEB) s21_grep.c $(STD) 
+e_grep.o:
+	$(CC) $(CF) $(DEB) e_grep.c $(STD) 
 
-$(LIB): s21_string.o
+$(LIB): e_string.o
 	$(AR) $(COM)$(LIB) $(COM)$^
 	$(RAN) $(COM)$(LIB)
 	$(RM) $^
 
-s21_string.o: 
-	$(CC) $(CF) $(STD) $(COM)s21_string.c -o $(COM)$@
+e_string.o: 
+	$(CC) $(CF) $(STD) $(COM)e_string.c -o $(COM)$@
 
 style:
 	clang-format -style=google -n *.h *.c $(COM)*.h $(COM)*.c
@@ -57,52 +57,52 @@ clean:
 	$(RM) $(COM)*.o 	
 	$(RM) $(COM)$(LIB) 
 
-rebuild: clean s21_grep
+rebuild: clean e_grep
 
-debug: s21_grep
+debug: e_grep
 	echo ---------------------------------------------------------------
-	./s21_grep s test_grep/test_0_grep.txt -o
-	./s21_grep -nivh = test_grep/test_1_grep.txt test_grep/test_2_grep.txt
-	./s21_grep -e A -ne12345678 text.txt
-	./s21_grep -ne12345678 text.txt
-	./s21_grep -e A text.txt -e n
-	./s21_grep -e A text.txt B
-	./s21_grep -e-e text.txt -e text2.txt
-	./s21_grep -e-e -e text.txt
-	./s21_grep -i -v A
-	./s21_grep -e text.txt o -i fgdf -ne -e
-	./s21_grep -e text.txt o -i fgdf -nen -e
-	./s21_grep -e text.txt o -i fgdf -nene -e
-	./s21_grep -e A text.txt
-	./s21_grep -e A text.txt -e
-	./s21_grep -o -e ina -e rina -o  test.txt
-	./s21_grep -o -e rina -e ina -o  test.txt
-	./s21_grep -e A -ne12345678 text.txt
-	./s21_grep -ne12345678 text.txt
-	./s21_grep -e A text.txt -e n
-	./s21_grep -e A text.txt B
-	./s21_grep -e-e text.txt -e text2.txt
-	./s21_grep -e text.txt o -i fgdf -ne -e
-	./s21_grep -e A text.txt
-	./s21_grep - text.txt
-	./s21_grep test text.txt
-	./s21_grep test text.txt -l
-	./s21_grep test text.txt -l -en
-	./s21_grep -f file.txt text.txt
-	./s21_grep -f file.txt A text.txt
-	./s21_grep -ef file.txt A text.txt.
-	./s21_grep -fe file.txt A text.txt
-	./s21_grep -f file.txt text.txt -ffile.txt -en
-	./s21_grep -e-e -e text.txt
-	./s21_grep -i -v A
-	./s21_grep -e text.txt o -i fgdf -nen -e
-	./s21_grep -e text.txt o -i fgdf -nene -e
-	./s21_grep -e A text.txt -e
-	./s21_grep -nlkjhgedf text.txt
-	./s21_grep test text.txt -
-	./s21_grep - text.txt -en
-	./s21_grep - text.txt
-	./s21_grep -c -e . test_1_grep.txt -e '.'
+	./e_grep s test_grep/test_0_grep.txt -o
+	./e_grep -nivh = test_grep/test_1_grep.txt test_grep/test_2_grep.txt
+	./e_grep -e A -ne12345678 text.txt
+	./e_grep -ne12345678 text.txt
+	./e_grep -e A text.txt -e n
+	./e_grep -e A text.txt B
+	./e_grep -e-e text.txt -e text2.txt
+	./e_grep -e-e -e text.txt
+	./e_grep -i -v A
+	./e_grep -e text.txt o -i fgdf -ne -e
+	./e_grep -e text.txt o -i fgdf -nen -e
+	./e_grep -e text.txt o -i fgdf -nene -e
+	./e_grep -e A text.txt
+	./e_grep -e A text.txt -e
+	./e_grep -o -e ina -e rina -o  test.txt
+	./e_grep -o -e rina -e ina -o  test.txt
+	./e_grep -e A -ne12345678 text.txt
+	./e_grep -ne12345678 text.txt
+	./e_grep -e A text.txt -e n
+	./e_grep -e A text.txt B
+	./e_grep -e-e text.txt -e text2.txt
+	./e_grep -e text.txt o -i fgdf -ne -e
+	./e_grep -e A text.txt
+	./e_grep - text.txt
+	./e_grep test text.txt
+	./e_grep test text.txt -l
+	./e_grep test text.txt -l -en
+	./e_grep -f file.txt text.txt
+	./e_grep -f file.txt A text.txt
+	./e_grep -ef file.txt A text.txt.
+	./e_grep -fe file.txt A text.txt
+	./e_grep -f file.txt text.txt -ffile.txt -en
+	./e_grep -e-e -e text.txt
+	./e_grep -i -v A
+	./e_grep -e text.txt o -i fgdf -nen -e
+	./e_grep -e text.txt o -i fgdf -nene -e
+	./e_grep -e A text.txt -e
+	./e_grep -nlkjhgedf text.txt
+	./e_grep test text.txt -
+	./e_grep - text.txt -en
+	./e_grep - text.txt
+	./e_grep -c -e . test_1_grep.txt -e '.'
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                           #

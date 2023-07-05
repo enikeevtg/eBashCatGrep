@@ -47,7 +47,7 @@ void dupl_check(int argc, char** str_array, int i) {
     if (str_array[j] && strcmp(str_array[j], str_array[i]) == 0) {
       printf("duplicate detected\n");
       if (i < argc) {
-        free(str_array[i]);  // remove from s21_grep.c
+        free(str_array[i]);  // remove from e_grep.c
         str_array[i] = NULL;
         duplicate = 1;
       } else {

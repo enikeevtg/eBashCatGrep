@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../common/s21_string.h"
+#include "../common/e_string.h"
 
 typedef struct {
   char** lopts;
@@ -27,7 +27,7 @@ int main() {
   }
   // Проверка считывания длины массива строк (fail)
   // char* lopts[] = {"--number-nonblank", "--squeeze-blank", "--number"};
-  // printf("%d", s21_strlen(lopts));
+  // printf("%d", e_strlen(lopts));
 
   return 0;
 }

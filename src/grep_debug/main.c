@@ -1,10 +1,10 @@
 /*  
  *  src/grep/main.c
  *  (c) T. Enikeev
- *  zeftyrst@student.21-school.ru
+ *  enikeev.tg@gmail.com
  */
 
-#include "s21_grep.h"
+#include "e_grep.h"
 
 int main(int argc, char** argv) {
 #ifdef DEBUG
@@ -16,9 +16,9 @@ int main(int argc, char** argv) {
 
   if (!data.templs || !data.files || !data.t_files) data.errcode = 1;
 
-  // S21_GREP() FUNCTION LAUNCH
+  // E_GREP() FUNCTION LAUNCH
   if (argc > 2 && !data.errcode)
-    s21_grep(argc, argv, &data);
+    e_grep(argc, argv, &data);
   else
     data.errcode = 2;
 
